@@ -16,10 +16,13 @@
     <div class="success-message" id="successMessage"></div>
     <form id="registerForm">
       <div class="input-group">
-        <input type="text" id="name" placeholder="Họ và tên" required>
+        <input type="text" id="username" placeholder="Tên đăng nhập" required>
       </div>
       <div class="input-group">
         <input type="email" id="email" placeholder="Email" required>
+      </div>
+      <div class="input-group">
+        <input type="tel" id="phone" placeholder="Số điện thoại" required>
       </div>
       <div class="input-group">
         <input type="password" id="password" placeholder="Mật khẩu" required>
@@ -42,8 +45,9 @@
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const name = document.getElementById('name').value;
+      const username = document.getElementById('username').value;
       const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
       const errorMessage = document.getElementById('errorMessage');
@@ -60,32 +64,59 @@
         return;
       }
       
+      // Validate required fields
+      if (!username || !email || !phone || !password) {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Vui lòng điền đầy đủ thông tin';
+        return;
+      }
+      
       try {
-        // For demo purposes, simulate successful registration
-        const userData = {
-          name: name || 'User',
-          email: email || '',
-          id: Date.now()
-        };
+        // Call the actual backend API
+        const response = await fetch('http://localhost:3000/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: username,
+            email: email,
+            phone: phone,
+            password: password
+          })
+        });
         
-        const token = 'mock-token-' + Date.now();
+        const data = await response.json();
         
-        // Auto-login after successful registration
-        window.Auth.login(token, userData);
-        
-        // Show success message
-        successMessage.style.display = 'block';
-        successMessage.textContent = 'Đăng ký thành công!';
-        
-        // Redirect to home page
-        setTimeout(() => {
-          window.location.replace('home.html');
-        }, 1000);
+        if (response.ok) {
+          // Show success message
+          successMessage.style.display = 'block';
+          successMessage.textContent = data.message || 'Đăng ký thành công!';
+          
+          // Clear the form
+          document.getElementById('registerForm').reset();
+          
+          // Redirect to login page after 2 seconds
+          setTimeout(() => {
+            window.location.replace('../../public/login.html');
+          }, 2000);
+          
+        } else {
+          // Show error message from server
+          errorMessage.style.display = 'block';
+          errorMessage.textContent = data.message || 'Có lỗi xảy ra khi đăng ký';
+        }
         
       } catch (error) {
         console.error('Registration error:', error);
         errorMessage.style.display = 'block';
-        errorMessage.textContent = error.message || 'Có lỗi xảy ra khi đăng ký';
+        
+        // Check if it's a network error (server not running)
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMessage.textContent = 'Không thể kết nối đến server. Vui lòng kiểm tra xem server có đang chạy không.';
+        } else {
+          errorMessage.textContent = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại.';
+        }
       }
     });
   </script>
