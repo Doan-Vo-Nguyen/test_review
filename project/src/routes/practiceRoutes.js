@@ -66,6 +66,8 @@ router.get('/available', auth, (req, res) => {
 
 // API: Get simple practice list (without auth - fallback)
 router.get('/simple', (req, res) => {
+  console.log('Simple practice API called');
+  
   const query = `
     SELECT 
       p.id,
@@ -73,18 +75,25 @@ router.get('/simple', (req, res) => {
       p.description,
       p.time_limit,
       p.num_questions,
-      COUNT(q.id) as actual_question_count
+      p.created_at,
+      COALESCE(COUNT(q.id), 0) as actual_question_count
     FROM practice p
     LEFT JOIN questions q ON p.id = q.exam_id
-    GROUP BY p.id, p.title, p.description, p.time_limit, p.num_questions
+    GROUP BY p.id, p.title, p.description, p.time_limit, p.num_questions, p.created_at
     ORDER BY p.created_at DESC
   `;
 
   connection.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching simple practice list:', err);
-      return res.status(500).json({ message: 'Lỗi khi lấy danh sách đề luyện tập', error: err.message });
+      return res.status(500).json({ 
+        message: 'Lỗi khi lấy danh sách đề luyện tập', 
+        error: err.message,
+        sql_error: err.sqlMessage 
+      });
     }
+    
+    console.log('Simple practice query results:', results);
     
     res.status(200).json({ 
       exams: results.map(practice => ({
@@ -95,7 +104,8 @@ router.get('/simple', (req, res) => {
         num_questions: practice.num_questions,
         actual_question_count: practice.actual_question_count,
         attempt_count: 0,
-        best_score: 0
+        best_score: 0,
+        created_at: practice.created_at
       }))
     });
   });
@@ -417,6 +427,86 @@ router.get('/:practiceId', auth, (req, res) => {
         created_at: practice.created_at
       }
     });
+  });
+});
+
+// ==========================================
+// DEBUG AND TEST ROUTES
+// ==========================================
+
+// API: Test route to check if practice routes are working
+router.get('/test', (req, res) => {
+  res.status(200).json({
+    message: 'Practice routes are working!',
+    timestamp: new Date().toISOString(),
+    endpoints: [
+      'GET /api/practice/available',
+      'GET /api/practice/simple',
+      'POST /api/practice/start',
+      'POST /api/practice/submit'
+    ]
+  });
+});
+
+// API: Insert sample practice data (for testing)
+router.post('/seed', (req, res) => {
+  const samplePractices = [
+    {
+      title: 'Luyện tập Bảo hiểm cơ bản',
+      description: 'Ôn tập các kiến thức cơ bản về bảo hiểm xã hội và y tế',
+      time_limit: 30,
+      num_questions: 15
+    },
+    {
+      title: 'Luyện tập Luật Bảo hiểm',
+      description: 'Các quy định pháp luật về bảo hiểm trong lao động',
+      time_limit: 45,
+      num_questions: 20
+    },
+    {
+      title: 'Luyện tập Thực hành Bảo hiểm',
+      description: 'Các tình huống thực tế trong quá trình làm việc với bảo hiểm',
+      time_limit: 60,
+      num_questions: 25
+    }
+  ];
+
+  let completed = 0;
+  let errors = [];
+
+  samplePractices.forEach((practice, index) => {
+    const insertQuery = `
+      INSERT INTO practice (title, description, time_limit, num_questions, created_at) 
+      VALUES (?, ?, ?, ?, NOW())
+    `;
+
+    connection.query(
+      insertQuery,
+      [practice.title, practice.description, practice.time_limit, practice.num_questions],
+      (err, result) => {
+        completed++;
+        
+        if (err) {
+          console.error(`Error inserting practice ${index + 1}:`, err);
+          errors.push(`Practice ${index + 1}: ${err.message}`);
+        }
+
+        if (completed === samplePractices.length) {
+          if (errors.length > 0) {
+            res.status(500).json({
+              message: 'Some sample data insertion failed',
+              errors: errors,
+              inserted: samplePractices.length - errors.length
+            });
+          } else {
+            res.status(201).json({
+              message: 'Sample practice data inserted successfully',
+              inserted: samplePractices.length
+            });
+          }
+        }
+      }
+    );
   });
 });
 

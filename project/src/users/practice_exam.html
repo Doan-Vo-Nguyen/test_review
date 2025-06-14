@@ -21,24 +21,48 @@
   <div class="exam-selection" id="examSelection">
     <div class="container">
       <div class="header">
-        <h1><i class="fas fa-dumbbell"></i> Chọn Đề Luyện Tập</h1>
-        <p>Ôn tập kiến thức với các đề thi thử - Không giới hạn số lần làm bài</p>
+        <div class="header-content">
+          <h1><i class="fas fa-dumbbell"></i> Chọn Đề Luyện Tập</h1>
+          <p class="header-subtitle">Ôn tập kiến thức với các đề thi thử - Không giới hạn số lần làm bài</p>
+        </div>
         <div class="practice-benefits">
-          <div class="benefit-item">
-            <i class="fas fa-redo"></i>
-            <span>Làm lại nhiều lần</span>
-          </div>
-          <div class="benefit-item">
-            <i class="fas fa-pause"></i>
-            <span>Tạm dừng được</span>
-          </div>
-          <div class="benefit-item">
-            <i class="fas fa-eye"></i>
-            <span>Xem đáp án ngay</span>
-          </div>
-          <div class="benefit-item">
-            <i class="fas fa-chart-line"></i>
-            <span>Phân tích chi tiết</span>
+          <div class="benefits-grid">
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <i class="fas fa-redo"></i>
+              </div>
+              <div class="benefit-text">
+                <span class="benefit-title">Làm lại nhiều lần</span>
+                <span class="benefit-desc">Không giới hạn số lượt</span>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <i class="fas fa-pause"></i>
+              </div>
+              <div class="benefit-text">
+                <span class="benefit-title">Tạm dừng được</span>
+                <span class="benefit-desc">Nghỉ giải lao thoải mái</span>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="benefit-text">
+                <span class="benefit-title">Xem đáp án ngay</span>
+                <span class="benefit-desc">Học hỏi từ sai lầm</span>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="benefit-text">
+                <span class="benefit-title">Phân tích chi tiết</span>
+                <span class="benefit-desc">Hiểu rõ điểm mạnh/yếu</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -50,6 +74,9 @@
       <div class="back-btn-container">
         <button onclick="window.location.href='home.html'" class="btn-back">
           <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+        </button>
+        <button onclick="debugAPIs()" class="btn-debug" style="margin-left: 1rem;">
+          <i class="fas fa-bug"></i> Debug API
         </button>
       </div>
     </div>
@@ -177,10 +204,22 @@
 
     // Check authentication on page load
     document.addEventListener('DOMContentLoaded', function() {
-      if (!window.Auth.isLoggedIn()) {
+      console.log('Page loaded, checking authentication...');
+      
+      // Check if auth functions exist
+      if (!window.Auth) {
+        console.error('Auth object not found, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
+      
+      if (!window.Auth.isLoggedIn()) {
+        console.error('User not logged in, redirecting to login');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      console.log('User authenticated, loading exams...');
       loadAvailableExams();
     });
 
@@ -188,33 +227,109 @@
     async function loadAvailableExams() {
       try {
         showLoading();
-        const token = localStorage.getItem('userToken');
-        console.log('Loading practice exams with token:', token);
+        console.log('Starting to load practice exams...');
         
-        // Try the new practice API first
-        let response = await fetch('/api/practice/available', {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        const token = localStorage.getItem('userToken');
+        console.log('Token found:', token ? 'Yes' : 'No');
+        
+        if (!token) {
+          console.error('No token found, redirecting to login');
+          window.location.href = 'login.html';
+          return;
+        }
+        
+        // Try multiple endpoints in sequence
+        let response;
+        let data;
+        
+        try {
+          console.log('Trying main practice API...');
+          response = await fetch('/api/practice/available', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log('Practice API response status:', response.status);
+          
+          if (response.ok) {
+            data = await response.json();
+            console.log('Practice API success, data:', data);
+          } else {
+            console.log('Practice API failed, trying fallback...');
+            throw new Error(`Practice API failed with status: ${response.status}`);
           }
-        });
-
-        if (!response.ok) {
-          console.log('Practice API failed, trying fallback...');
-          // Fallback to simple API
-          response = await fetch('/api/practice/simple');
+        } catch (apiError) {
+          console.log('Main API failed, trying simple API...', apiError.message);
+          
+          try {
+            response = await fetch('/api/practice/simple', {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log('Simple API response status:', response.status);
+            
+            if (response.ok) {
+              data = await response.json();
+              console.log('Simple API success, data:', data);
+            } else {
+              throw new Error(`Simple API failed with status: ${response.status}`);
+            }
+          } catch (simpleError) {
+            console.log('Simple API also failed, trying exam API fallback...', simpleError.message);
+            
+            // Last resort - try old exam API
+            try {
+              response = await fetch('/api/exams/practice/simple', {
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              console.log('Exam API fallback response status:', response.status);
+              
+              if (response.ok) {
+                data = await response.json();
+                console.log('Exam API fallback success, data:', data);
+              } else {
+                throw new Error(`All APIs failed. Last attempt status: ${response.status}`);
+              }
+            } catch (examError) {
+              console.error('All API attempts failed:', examError);
+              throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.');
+            }
+          }
         }
 
-        if (!response.ok) {
-          throw new Error('Không thể tải danh sách đề luyện tập');
+        if (data && data.exams) {
+          console.log('Displaying', data.exams.length, 'exams');
+          displayExamList(data.exams);
+        } else {
+          console.warn('No exams data received:', data);
+          displayExamList([]);
         }
-
-        const data = await response.json();
-        displayExamList(data.exams);
+        
         hideLoading();
       } catch (error) {
         console.error('Error loading practice exams:', error);
-        showError('Có lỗi khi tải danh sách đề luyện tập: ' + error.message);
         hideLoading();
+        showError('Có lỗi khi tải danh sách đề luyện tập: ' + error.message);
+        
+        // Show empty state with retry option
+        const examList = document.getElementById('examList');
+        examList.innerHTML = `
+          <div class="error-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Không thể tải đề luyện tập</h3>
+            <p>${error.message}</p>
+            <button onclick="loadAvailableExams()" class="btn-retry">
+              <i class="fas fa-redo"></i> Thử lại
+            </button>
+          </div>
+        `;
       }
     }
 
@@ -825,6 +940,157 @@
         return message;
       }
     });
+
+    function debugAPIs() {
+      console.log('=== DEBUG API ENDPOINTS ===');
+      showInfo('Đang kiểm tra kết nối API...', 'info');
+      
+      const token = localStorage.getItem('userToken');
+      console.log('Token exists:', !!token);
+      
+      // Test endpoints one by one
+      const endpoints = [
+        { url: '/api/practice/test', method: 'GET', name: 'Practice Test' },
+        { url: '/api/practice/simple', method: 'GET', name: 'Practice Simple' },
+        { url: '/api/practice/available', method: 'GET', name: 'Practice Available', auth: true },
+        { url: '/api/exams/debug/all', method: 'GET', name: 'Exams Debug' }
+      ];
+      
+      let completedTests = 0;
+      const results = [];
+      
+      endpoints.forEach(async (endpoint, index) => {
+        try {
+          console.log(`Testing ${endpoint.name}...`);
+          
+          const headers = { 'Content-Type': 'application/json' };
+          if (endpoint.auth && token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method,
+            headers: headers
+          });
+          
+          const result = {
+            name: endpoint.name,
+            url: endpoint.url,
+            status: response.status,
+            ok: response.ok,
+            data: null,
+            error: null
+          };
+          
+          if (response.ok) {
+            try {
+              result.data = await response.json();
+              console.log(`✅ ${endpoint.name}: Success`, result.data);
+            } catch (jsonError) {
+              result.error = 'Invalid JSON response';
+              console.log(`⚠️ ${endpoint.name}: JSON Parse Error`, jsonError);
+            }
+          } else {
+            result.error = `HTTP ${response.status} ${response.statusText}`;
+            console.log(`❌ ${endpoint.name}: Failed`, result.error);
+          }
+          
+          results.push(result);
+          completedTests++;
+          
+          if (completedTests === endpoints.length) {
+            displayDebugResults(results);
+          }
+          
+        } catch (fetchError) {
+          console.error(`❌ ${endpoint.name}: Network Error`, fetchError);
+          results.push({
+            name: endpoint.name,
+            url: endpoint.url,
+            status: 0,
+            ok: false,
+            data: null,
+            error: fetchError.message
+          });
+          
+          completedTests++;
+          if (completedTests === endpoints.length) {
+            displayDebugResults(results);
+          }
+        }
+      });
+    }
+    
+    function displayDebugResults(results) {
+      console.log('=== DEBUG RESULTS ===', results);
+      
+      const examList = document.getElementById('examList');
+      examList.innerHTML = `
+        <div class="debug-results">
+          <h3><i class="fas fa-bug"></i> Kết quả kiểm tra API</h3>
+          <div class="debug-grid">
+            ${results.map(result => `
+              <div class="debug-item ${result.ok ? 'success' : 'error'}">
+                <div class="debug-header">
+                  <strong>${result.name}</strong>
+                  <span class="status ${result.ok ? 'ok' : 'error'}">
+                    ${result.ok ? '✅' : '❌'} ${result.status}
+                  </span>
+                </div>
+                <div class="debug-url">${result.url}</div>
+                ${result.error ? `<div class="debug-error">❌ ${result.error}</div>` : ''}
+                ${result.data ? `
+                  <div class="debug-data">
+                    <details>
+                      <summary>📊 Response Data</summary>
+                      <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                    </details>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <div class="debug-actions">
+            <button onclick="loadAvailableExams()" class="btn-primary">
+              <i class="fas fa-redo"></i> Thử lại tải dữ liệu
+            </button>
+            <button onclick="createSampleData()" class="btn-secondary">
+              <i class="fas fa-plus"></i> Tạo dữ liệu mẫu
+            </button>
+          </div>
+        </div>
+      `;
+      
+      const successCount = results.filter(r => r.ok).length;
+      const message = `Kiểm tra hoàn tất: ${successCount}/${results.length} API hoạt động`;
+      showInfo(message, successCount === results.length ? 'success' : 'warning');
+    }
+    
+    async function createSampleData() {
+      try {
+        showInfo('Đang tạo dữ liệu mẫu...', 'info');
+        
+        const response = await fetch('/api/practice/seed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showInfo('Tạo dữ liệu mẫu thành công!', 'success');
+          console.log('Sample data created:', data);
+          setTimeout(() => loadAvailableExams(), 1000);
+        } else {
+          const error = await response.text();
+          showInfo('Lỗi khi tạo dữ liệu mẫu: ' + error, 'error');
+        }
+      } catch (error) {
+        console.error('Error creating sample data:', error);
+        showInfo('Lỗi kết nối khi tạo dữ liệu mẫu', 'error');
+      }
+    }
   </script>
 </body>
 </html>
