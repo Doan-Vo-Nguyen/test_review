@@ -142,7 +142,7 @@
         // Check authentication and load data
         document.addEventListener('DOMContentLoaded', function() {
             if (!window.Auth.isLoggedIn()) {
-                window.location.href = 'login.html';
+                window.location.href = '../../public/login.html';
                 return;
             }
             
@@ -154,7 +154,6 @@
         function setupEventListeners() {
             document.getElementById('logoutBtn').addEventListener('click', function() {
                 window.Auth.logout();
-                window.location.href = 'login.html';
             });
 
             document.getElementById('sortBy').addEventListener('change', function() {

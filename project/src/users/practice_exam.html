@@ -78,6 +78,9 @@
         <button onclick="debugAPIs()" class="btn-debug" style="margin-left: 1rem;">
           <i class="fas fa-bug"></i> Debug API
         </button>
+        <button onclick="testPaths()" class="btn-debug" style="margin-left: 1rem; background: #e67e22;">
+          <i class="fas fa-route"></i> Test Paths
+        </button>
       </div>
     </div>
   </div>
@@ -195,6 +198,16 @@
 
   <script src="../../public/js/auth.js"></script>
   <script>
+    // Ensure the page is always visible regardless of auth.js
+    document.body.style.display = 'block';
+    
+    // Override the auth.js handleAuthState to prevent conflicts
+    window.addEventListener('load', function() {
+      // Make sure the page is visible
+      document.body.style.display = 'block';
+    });
+  </script>
+  <script>
     let examData = null;
     let timeLeft = 0;
     let timerInterval = null;
@@ -206,21 +219,19 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Page loaded, checking authentication...');
       
-      // Check if auth functions exist
-      if (!window.Auth) {
-        console.error('Auth object not found, redirecting to login');
-        window.location.href = 'login.html';
-        return;
-      }
-      
-      if (!window.Auth.isLoggedIn()) {
-        console.error('User not logged in, redirecting to login');
-        window.location.href = 'login.html';
-        return;
-      }
-      
-      console.log('User authenticated, loading exams...');
-      loadAvailableExams();
+      // Wait a bit for auth.js to finish its initialization
+      setTimeout(() => {
+        const token = localStorage.getItem('userToken');
+        
+        if (!token) {
+          console.error('No token found, redirecting to login');
+          window.location.href = '/project/public/login.html';
+          return;
+        }
+        
+        console.log('Token found, loading exams...');
+        loadAvailableExams();
+      }, 100); // Small delay to let auth.js complete
     });
 
     // Load available practice exams
@@ -234,7 +245,7 @@
         
         if (!token) {
           console.error('No token found, redirecting to login');
-          window.location.href = 'login.html';
+          window.location.href = '/project/public/login.html';
           return;
         }
         
@@ -244,7 +255,7 @@
         
         try {
           console.log('Trying main practice API...');
-          response = await fetch('/api/practice/available', {
+          response = await fetch('http://localhost:3000/api/practice/available', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -264,7 +275,7 @@
           console.log('Main API failed, trying simple API...', apiError.message);
           
           try {
-            response = await fetch('/api/practice/simple', {
+            response = await fetch('http://localhost:3000/api/exams/simple', {
               headers: {
                 'Content-Type': 'application/json'
               }
@@ -283,7 +294,7 @@
             
             // Last resort - try old exam API
             try {
-              response = await fetch('/api/exams/practice/simple', {
+              response = await fetch('http://localhost:3000/api/exams/practice/simple', {
                 headers: {
                   'Content-Type': 'application/json'
                 }
@@ -316,20 +327,27 @@
       } catch (error) {
         console.error('Error loading practice exams:', error);
         hideLoading();
-        showError('Có lỗi khi tải danh sách đề luyện tập: ' + error.message);
         
-        // Show empty state with retry option
+        // Don't redirect on API errors, just show error state
         const examList = document.getElementById('examList');
         examList.innerHTML = `
           <div class="error-state">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>Không thể tải đề luyện tập</h3>
             <p>${error.message}</p>
-            <button onclick="loadAvailableExams()" class="btn-retry">
-              <i class="fas fa-redo"></i> Thử lại
-            </button>
+            <div class="error-actions">
+              <button onclick="loadAvailableExams()" class="btn-retry">
+                <i class="fas fa-redo"></i> Thử lại
+              </button>
+              <button onclick="debugAPIs()" class="btn-debug" style="margin-left: 10px;">
+                <i class="fas fa-bug"></i> Kiểm tra API
+              </button>
+            </div>
           </div>
         `;
+        
+        // Show error notification but don't redirect
+        showError('Có lỗi khi tải danh sách đề luyện tập: ' + error.message);
       }
     }
 
@@ -397,13 +415,13 @@
       try {
         showLoading();
         const token = localStorage.getItem('userToken');
-        const response = await fetch('/api/practice/start', {
+        const response = await fetch('http://localhost:3000/api/exams/practice/start', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ practiceId: practiceId })
+          body: JSON.stringify({ examId: practiceId })
         });
 
         if (!response.ok) {
@@ -646,14 +664,14 @@
         const timeSpent = Math.floor((new Date() - startTime) / 1000);
 
         const token = localStorage.getItem('userToken');
-        const response = await fetch('/api/practice/submit', {
+        const response = await fetch('http://localhost:3000/api/exams/practice/submit', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            practiceId: selectedExamId,
+            examId: selectedExamId,
             answers: answers,
             timeSpent: timeSpent
           })
@@ -908,7 +926,92 @@
     }
 
     function showError(message) {
-      alert('Lỗi: ' + message);
+      // Create a more user-friendly error display instead of alert
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-error';
+      toast.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Lỗi: ${message}</span>
+        <button onclick="this.parentElement.remove()" class="toast-close">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      
+      // Add styles if not already present
+      if (!document.getElementById('toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+          .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+          }
+          .toast-error { background: #e74c3c; }
+          .toast-success { background: #2ecc71; }
+          .toast-warning { background: #f39c12; }
+          .toast-info { background: #3498db; }
+          .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: auto;
+            padding: 5px;
+          }
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          .error-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+          }
+          .btn-retry, .btn-debug {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          }
+          .btn-retry {
+            background: #3498db;
+            color: white;
+          }
+          .btn-debug {
+            background: #95a5a6;
+            color: white;
+          }
+          .btn-retry:hover { background: #2980b9; }
+          .btn-debug:hover { background: #7f8c8d; }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(toast);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 5000);
     }
 
     function showInfo(message, type = 'info') {
@@ -1090,6 +1193,39 @@
         console.error('Error creating sample data:', error);
         showInfo('Lỗi kết nối khi tạo dữ liệu mẫu', 'error');
       }
+    }
+
+    // Test path function
+    function testPaths() {
+      console.log('=== PATH TESTING ===');
+      console.log('Current URL:', window.location.href);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('Current origin:', window.location.origin);
+      
+      const paths = [
+        '/project/public/login.html',
+        '../../public/login.html',
+        '../../../public/login.html',
+        '/project/src/users/home.html',
+        'home.html'
+      ];
+      
+      console.log('Testing paths:');
+      paths.forEach(path => {
+        console.log(`- ${path} -> ${new URL(path, window.location.href).href}`);
+      });
+      
+      // Test token
+      const token = localStorage.getItem('userToken');
+      console.log('Token exists:', !!token);
+      if (token) {
+        console.log('Token preview:', token.substring(0, 20) + '...');
+      }
+      
+      // Test localStorage
+      console.log('All localStorage keys:', Object.keys(localStorage));
+      
+      showInfo('Path test completed - check console for details', 'info');
     }
   </script>
 </body>

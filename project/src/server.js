@@ -38,7 +38,7 @@ app.use('/api/auth', authRoutes);  // Route cho đăng ký và đăng nhập
 app.use('/api/user', userRoutes);  // API quản lý người dùng - Updated to match frontend
 app.use('/api/exams', examRoutes);  // API quản lý đề thi - Updated to match frontend
 app.use('/api/practice', practiceRoutes);  // API quản lý luyện tập - Updated to match frontend
-app.use('/api/result', resultRoutes);  // API quản lý kết quả thi - Updated to match frontend
+app.use('/api/results', resultRoutes);  // API quản lý kết quả thi - Updated to match frontend
 
 // Basic error handling middleware
 app.use((err, req, res, next) => {

@@ -3,23 +3,23 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const userData = localStorage.getItem('user');
     if (!userData) {
-      window.location.replace('../../src/users/login.html');
+      window.location.replace('login.html');
       return;
     }
 
     const user = JSON.parse(userData);
     if (!user || !user.email) {
       localStorage.removeItem('user');
-      window.location.replace('../../src/users/login.html');
+      window.location.replace('login.html');
       return;
     }
 
     // Verify user role and redirect if necessary
     if (user.role === 'admin' && !window.location.pathname.includes('/admin/')) {
-      window.location.replace('../../src/admin/home.html');
+      window.location.replace('../src/admin/home.html');
       return;
     } else if (user.role !== 'admin' && window.location.pathname.includes('/admin/')) {
-      window.location.replace('../../src/users/home.html');
+      window.location.replace('../src/users/home.html');
       return;
     }
 
@@ -83,13 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
         profileDropdown.classList.remove('show');
       });
 
-      // Handle logout
+      // Handle logout - USE UNIFIED LOGIN ONLY
       const logoutLink = profileDropdown.querySelector('.logout-link');
       logoutLink.addEventListener('click', (e) => {
         e.preventDefault();
-        localStorage.removeItem('user');
-        const isAdmin = window.location.pathname.includes('/admin/');
-        window.location.replace(isAdmin ? '../../src/admin/login.html' : '../../src/users/login.html');
+        logout();
       });
     }
 
@@ -135,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (error) {
     console.error('Error initializing home page:', error);
     localStorage.removeItem('user');
-    window.location.replace('../../src/users/login.html');
+    window.location.replace('login.html');
   }
 });
 
@@ -295,18 +293,14 @@ function initializeProfileDropdown() {
   });
 }
 
-// Logout function
+// Unified logout function
 function logout() {
-  try {
-    // Clear local storage
+  if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
-
-    // Redirect to login page
-    window.location.replace('../../src/users/login.html');
-  } catch (error) {
-    console.error('Error during logout:', error);
-    showMessage('Có lỗi xảy ra khi đăng xuất', 'error');
+    localStorage.removeItem('admin');
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userData');
+    window.location.replace('login.html');
   }
 }
 

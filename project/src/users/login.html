@@ -3,99 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng nhập - Ôn Tập Bảo Hiểm</title>
-  <link rel="stylesheet" href="../../public/css/auth.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="../../public/js/auth.js"></script>
+  <title>Đang chuyển hướng...</title>
+  <meta http-equiv="refresh" content="0;url=../../public/login.html">
 </head>
 <body>
-  <div class="form-container">
-    <h1>Đăng nhập</h1>
-    <div class="error-message" id="errorMessage"></div>
-    <div class="success-message" id="successMessage"></div>
-    <form id="loginForm">
-      <div class="input-group">
-        <input type="email" id="email" placeholder="Email" required>
-      </div>
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Mật khẩu" required>
-      </div>
-      <button type="submit" class="btn">
-        <i class="fas fa-sign-in-alt"></i> Đăng nhập
-      </button>
-    </form>
-    <p>Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a></p>
-    <a href="../../index.html" class="back-home">
-      <i class="fas fa-arrow-left"></i>
-      Quay lại trang chủ
-    </a>
+  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+    <h2>Đang chuyển hướng...</h2>
+    <p>Nếu không tự động chuyển hướng, <a href="../../public/login.html">click vào đây</a></p>
   </div>
-
   <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const errorMessage = document.getElementById('errorMessage');
-      const successMessage = document.getElementById('successMessage');
-      
-      // Hide previous messages
-      errorMessage.style.display = 'none';
-      successMessage.style.display = 'none';
-      
-      try {
-        let response;
-        let data;
-        
-        try {
-          // Try real API first
-          response = await fetch('http://localhost:3000/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-          });
-          data = await response.json();
-        } catch (apiError) {
-          console.log('API not available, using mock login');
-          // Use mock login if API is not available
-          response = await window.Auth.mockLogin(email, password);
-          data = await response.json();
-        }
-        
-        if (response.ok && data) {
-          // Safely extract user data with fallbacks
-          const userData = {
-            name: data.user?.name || data.name || 'User',
-            email: data.user?.email || data.email || email,
-            id: data.user?.id || data.id || null
-          };
-          
-          const token = data.token || 'mock-token-' + Date.now();
-          
-          // Use the Auth.login function to handle login
-          window.Auth.login(token, userData);
-
-          // Show success message
-          successMessage.style.display = 'block';
-          successMessage.textContent = 'Đăng nhập thành công!';
-
-          // Redirect to home page
-          setTimeout(() => {
-            window.location.replace('home.html');
-          }, 500);
-        } else {
-          throw new Error(data?.message || 'Đăng nhập thất bại');
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        errorMessage.style.display = 'block';
-        errorMessage.textContent = error.message || 'Có lỗi xảy ra khi đăng nhập';
-      }
-    });
+    window.location.replace('../../public/login.html');
   </script>
 </body>
 </html>

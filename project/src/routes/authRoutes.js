@@ -83,4 +83,43 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// API verify token
+router.get('/verify', async (req, res) => {
+  try {
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Không tìm thấy token xác thực' });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    // Get user from database
+    const [users] = await pool.execute(
+      'SELECT id, email, username, role FROM users WHERE id = ?',
+      [decoded.userId]
+    );
+    
+    if (users.length === 0) {
+      return res.status(401).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    const user = users[0];
+    res.json({ 
+      message: 'Token hợp lệ',
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(401).json({ message: 'Token không hợp lệ' });
+  }
+});
+
 module.exports = router;

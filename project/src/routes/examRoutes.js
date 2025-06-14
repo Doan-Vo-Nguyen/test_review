@@ -2,18 +2,72 @@
 const express = require('express');
 const connection = require('../db');  // Kết nối MySQL
 const router = express.Router();
-const db = require('../config/db');
 const auth = require('../middleware/auth');
 
 // ==========================================
 // GENERAL EXAM ROUTES
 // ==========================================
 
-// API: Lấy danh sách đề thi
-router.get('/', (req, res) => {
-  connection.query('SELECT * FROM exams WHERE is_active = 1', (err, result) => {
-    if (err) return res.status(500).json({ message: 'Lỗi khi lấy danh sách đề thi', error: err });
-    res.status(200).json({ exams: result });
+// API: Lấy danh sách đề thi (for formal exams)
+router.get('/', auth, (req, res) => {
+  const userId = req.user ? req.user.id : null;
+  
+  let query = `
+    SELECT 
+      e.id,
+      e.title,
+      e.description,
+      e.time_limit,
+      e.passing_score,
+      COUNT(q.id) as question_count
+    FROM exams e
+    LEFT JOIN questions q ON e.id = q.exam_id
+    WHERE e.is_active = 1
+    GROUP BY e.id, e.title, e.description, e.time_limit, e.passing_score
+    ORDER BY e.title
+  `;
+
+  if (userId) {
+    // Include information about whether user has already taken each exam
+    query = `
+      SELECT 
+        e.id,
+        e.title,
+        e.description,
+        e.time_limit,
+        e.passing_score,
+        COUNT(q.id) as question_count,
+        CASE WHEN er.id IS NOT NULL THEN 1 ELSE 0 END as already_taken,
+        CASE WHEN er.id IS NULL THEN 1 ELSE 0 END as can_take
+      FROM exams e
+      LEFT JOIN questions q ON e.id = q.exam_id
+      LEFT JOIN exam_results er ON e.id = er.exam_id AND er.user_id = ? AND er.is_practice = 0
+      WHERE e.is_active = 1
+      GROUP BY e.id, e.title, e.description, e.time_limit, e.passing_score, er.id
+      ORDER BY e.title
+    `;
+  }
+
+  const params = userId ? [userId] : [];
+
+  connection.query(query, params, (err, results) => {
+    if (err) {
+      console.error('Error fetching exams:', err);
+      return res.status(500).json({ message: 'Lỗi khi lấy danh sách đề thi', error: err.message });
+    }
+    
+    res.status(200).json({ 
+      exams: results.map(exam => ({
+        id: exam.id,
+        title: exam.title,
+        description: exam.description,
+        time_limit: exam.time_limit,
+        passing_score: exam.passing_score,
+        question_count: exam.question_count,
+        already_taken: exam.already_taken || false,
+        can_take: exam.can_take !== undefined ? exam.can_take : true
+      }))
+    });
   });
 });
 
@@ -121,7 +175,7 @@ router.get('/:examId/questions', (req, res) => {
 // ==========================================
 
 // API: Get practice exams (simple version without auth)
-router.get('/practice/simple', (req, res) => {
+router.get('/simple', (req, res) => {
   const query = `
     SELECT 
       e.id,
@@ -161,7 +215,7 @@ router.get('/practice/simple', (req, res) => {
 });
 
 // API: Get practice exams (with user stats)
-router.get('/practice/available', auth, (req, res) => {
+router.get('/available', auth, (req, res) => {
   const userId = req.user.id;
   const query = `
     SELECT 
@@ -171,8 +225,8 @@ router.get('/practice/available', auth, (req, res) => {
       e.time_limit,
       e.passing_score,
       COUNT(q.id) as question_count,
-      COALESCE((SELECT COUNT(*) FROM exam_results er WHERE er.exam_id = e.id AND er.user_id = ? AND er.is_practice = 1), 0) as attempt_count,
-      COALESCE((SELECT MAX(er.score) FROM exam_results er WHERE er.exam_id = e.id AND er.user_id = ? AND er.is_practice = 1), 0) as best_score
+      COALESCE((SELECT COUNT(*) FROM exam_results er WHERE er.exam_id = e.id AND er.user_id = ?), 0) as attempt_count,
+      COALESCE((SELECT MAX(er.score) FROM exam_results er WHERE er.exam_id = e.id AND er.user_id = ?), 0) as best_score
     FROM exams e
     LEFT JOIN questions q ON e.id = q.exam_id
     WHERE e.is_active = 1
@@ -180,9 +234,9 @@ router.get('/practice/available', auth, (req, res) => {
     ORDER BY e.title
   `;
 
-  connection.query(query, [userId, userId], (err, results) => {
+  connection.query(query, [userId], (err, results) => {
     if (err) {
-      console.error('Error in practice/available:', err);
+      console.error('Error in /available:', err);
       return res.status(500).json({ message: 'Lỗi khi lấy danh sách đề luyện tập', error: err.message });
     }
     
@@ -533,19 +587,59 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-// Helper function to format time
+// ==========================================
+// DEBUG ROUTES
+// ==========================================
+
+// API: Debug route to test all exam endpoints
+router.get('/debug/all', (req, res) => {
+  const query = `
+    SELECT 
+      e.id,
+      e.title,
+      e.description,
+      e.time_limit,
+      e.passing_score,
+      e.is_active,
+      COUNT(q.id) as question_count
+    FROM exams e
+    LEFT JOIN questions q ON e.id = q.exam_id
+    GROUP BY e.id, e.title, e.description, e.time_limit, e.passing_score, e.is_active
+    ORDER BY e.title
+  `;
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error in debug route:', err);
+      return res.status(500).json({ 
+        message: 'Error fetching debug data', 
+        error: err.message,
+        sql_error: err.sqlMessage 
+      });
+    }
+    
+    res.status(200).json({
+      message: 'Debug data fetched successfully',
+      timestamp: new Date().toISOString(),
+      endpoints: [
+        'GET /api/exams/ - Get all formal exams',
+        'GET /api/exams/:examId - Get specific exam details',
+        'GET /api/exams/debug/all - This debug endpoint'
+      ],
+      data: {
+        totalExams: results.length,
+        exams: results
+      }
+    });
+  });
+});
+
+// Utility function to format time
 function formatTime(seconds) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`;
-  } else {
-    return `${secs}s`;
-  }
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
 module.exports = router;

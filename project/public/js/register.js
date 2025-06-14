@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         errorMessage.style.display = 'none';
                     }
 
-                    // Redirect to login page after a short delay
+                    // Redirect to unified login page after a short delay
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 1500);

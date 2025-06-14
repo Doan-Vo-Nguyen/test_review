@@ -448,62 +448,122 @@ router.get('/test', (req, res) => {
   });
 });
 
-// API: Insert sample practice data (for testing)
+// API: Seed practice data (for testing/development)
 router.post('/seed', (req, res) => {
+  console.log('Seeding practice data...');
+  
+  // Sample practice exams
   const samplePractices = [
     {
-      title: 'Luyện tập Bảo hiểm cơ bản',
+      title: 'Bài Luyện Tập Cơ Bản về Bảo Hiểm',
       description: 'Ôn tập các kiến thức cơ bản về bảo hiểm xã hội và y tế',
       time_limit: 30,
-      num_questions: 15
-    },
-    {
-      title: 'Luyện tập Luật Bảo hiểm',
-      description: 'Các quy định pháp luật về bảo hiểm trong lao động',
-      time_limit: 45,
       num_questions: 20
     },
     {
-      title: 'Luyện tập Thực hành Bảo hiểm',
-      description: 'Các tình huống thực tế trong quá trình làm việc với bảo hiểm',
+      title: 'Luyện Tập Nâng Cao - Chế Độ Bảo Hiểm',
+      description: 'Các câu hỏi nâng cao về các chế độ bảo hiểm và quyền lợi',
+      time_limit: 45,
+      num_questions: 30
+    },
+    {
+      title: 'Đề Thi Thử - Bảo Hiểm Thất Nghiệp',
+      description: 'Luyện tập về bảo hiểm thất nghiệp và các quy định liên quan',
       time_limit: 60,
-      num_questions: 25
+      num_questions: 40
     }
   ];
 
-  let completed = 0;
-  let errors = [];
+  // Sample questions for each practice
+  const sampleQuestions = [
+    {
+      question_text: 'Bảo hiểm xã hội là gì?',
+      question_type: 'multiple_choice',
+      options: JSON.stringify([
+        'Chế độ bảo hiểm bắt buộc do nhà nước tổ chức',
+        'Chế độ bảo hiểm tự nguyện',
+        'Chế độ tiết kiệm cá nhân',
+        'Chế độ hỗ trợ từ thiện'
+      ]),
+      correct_answer: 'Chế độ bảo hiểm bắt buộc do nhà nước tổ chức'
+    },
+    {
+      question_text: 'Người lao động có được hưởng bảo hiểm thất nghiệp không?',
+      question_type: 'true_false',
+      options: JSON.stringify(['Có', 'Không']),
+      correct_answer: 'true'
+    },
+    {
+      question_text: 'Thời gian đóng bảo hiểm xã hội tối thiểu để được hưởng lương hưu là bao nhiêu?',
+      question_type: 'multiple_choice',
+      options: JSON.stringify(['15 năm', '20 năm', '25 năm', '30 năm']),
+      correct_answer: '20 năm'
+    },
+    {
+      question_text: 'Bảo hiểm y tế có bao gồm chi phí khám chữa bệnh không?',
+      question_type: 'true_false',
+      options: JSON.stringify(['Có', 'Không']),
+      correct_answer: 'true'
+    }
+  ];
 
+  let practicesCreated = 0;
+  let questionsCreated = 0;
+
+  // Create practices and questions
   samplePractices.forEach((practice, index) => {
-    const insertQuery = `
+    const insertPracticeQuery = `
       INSERT INTO practice (title, description, time_limit, num_questions, created_at) 
       VALUES (?, ?, ?, ?, NOW())
     `;
 
     connection.query(
-      insertQuery,
+      insertPracticeQuery,
       [practice.title, practice.description, practice.time_limit, practice.num_questions],
       (err, result) => {
-        completed++;
-        
         if (err) {
-          console.error(`Error inserting practice ${index + 1}:`, err);
-          errors.push(`Practice ${index + 1}: ${err.message}`);
+          console.error('Error creating practice:', err);
+          return;
         }
 
-        if (completed === samplePractices.length) {
-          if (errors.length > 0) {
-            res.status(500).json({
-              message: 'Some sample data insertion failed',
-              errors: errors,
-              inserted: samplePractices.length - errors.length
-            });
-          } else {
+        practicesCreated++;
+        const practiceId = result.insertId;
+
+        // Add questions for this practice
+        sampleQuestions.forEach((question) => {
+          const insertQuestionQuery = `
+            INSERT INTO questions (exam_id, question_text, question_type, options, correct_answer, created_at) 
+            VALUES (?, ?, ?, ?, ?, NOW())
+          `;
+
+          connection.query(
+            insertQuestionQuery,
+            [practiceId, question.question_text, question.question_type, question.options, question.correct_answer],
+            (err) => {
+              if (err) {
+                console.error('Error creating question:', err);
+                return;
+              }
+              questionsCreated++;
+            }
+          );
+        });
+
+        // Send response after last practice is created
+        if (practicesCreated === samplePractices.length) {
+          setTimeout(() => {
             res.status(201).json({
-              message: 'Sample practice data inserted successfully',
-              inserted: samplePractices.length
+              message: 'Dữ liệu mẫu đã được tạo thành công',
+              practicesCreated: practicesCreated,
+              questionsCreated: questionsCreated,
+              practices: samplePractices.map((p, i) => ({
+                title: p.title,
+                description: p.description,
+                time_limit: p.time_limit,
+                num_questions: p.num_questions
+              }))
             });
-          }
+          }, 1000); // Wait a bit for all questions to be inserted
         }
       }
     );
@@ -622,19 +682,12 @@ router.delete('/:practiceId', auth, (req, res) => {
   );
 });
 
-// Helper function to format time
+// Utility function to format time
 function formatTime(seconds) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`;
-  } else {
-    return `${secs}s`;
-  }
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
 module.exports = router; 

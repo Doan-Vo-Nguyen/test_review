@@ -1,112 +1,51 @@
-// Check if admin is logged in
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Admin login page loaded');
-  
-  // Check if admin is already logged in
-  const adminData = localStorage.getItem('admin');
-  console.log('Checking existing admin data:', adminData);
-  
-  if (adminData) {
-    try {
-      const admin = JSON.parse(adminData);
-      console.log('Parsed admin data:', admin);
-      if (admin && admin.token && admin.role === 'admin') {
-        // Check if we're on the login page
-        if (window.location.pathname.includes('login.html')) {
-          console.log('Admin already logged in, redirecting to home.html');
-          window.location.href = 'home.html';
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing admin data:', error);
-      localStorage.removeItem('admin');
-    }
-  } else {
-    // If no admin data and we're not on login page, redirect to login
-    if (!window.location.pathname.includes('login.html')) {
-      console.log('No admin data found, redirecting to login');
-      window.location.href = 'login.html';
+  try {
+    console.log('Admin home page loading, checking authentication...');
+    
+    // Check for admin session first
+    const adminData = localStorage.getItem('admin');
+    console.log('Admin data from localStorage:', adminData);
+    
+    if (!adminData) {
+      console.log('No admin data found, redirecting to unified login');
+      window.location.href = '../../public/login.html';
       return;
     }
+
+    const admin = JSON.parse(adminData);
+    console.log('Parsed admin data:', admin);
+    
+    if (!admin || !admin.token || admin.role !== 'admin') {
+      console.log('Invalid admin data, redirecting to unified login');
+      localStorage.removeItem('admin');
+      window.location.href = '../../public/login.html';
+      return;
+    }
+
+    console.log('Admin authentication successful, initializing dashboard');
+
+    // Initialize all sections
+    initializeSidebar();
+    initializeHeader();
+    initializeDashboard();
+    initializeExamManagement();
+    initializeQuestionBank();
+    initializeReports();
+    initializeProfileDropdown();
+  } catch (error) {
+    console.error('Error initializing admin page:', error);
+    localStorage.removeItem('admin');
+    window.location.href = '../../public/login.html';
   }
 
-  const adminLoginForm = document.getElementById('adminLoginForm');
-  const errorMessage = document.getElementById('errorMessage');
-  const successMessage = document.getElementById('successMessage');
-
-  if (adminLoginForm) {
-    console.log('Admin login form found, adding event listener');
-    adminLoginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      console.log('Admin login form submitted');
-      
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      console.log('Login attempt with username:', username);
-
-      // Clear previous messages
-      if (errorMessage) {
-        errorMessage.textContent = '';
-        errorMessage.style.display = 'none';
-      }
-      if (successMessage) {
-        successMessage.textContent = '';
-        successMessage.style.display = 'none';
-      }
-
-      try {
-        // Use the same login endpoint but treat username as email for admin login
-        const response = await fetch('http://localhost:3000/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email: username, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Check if the user has admin role
-          if (data.role !== 'admin') {
-            throw new Error('Bạn không có quyền truy cập vào trang quản trị');
-          }
-
-          // Store admin data and token
-          const adminData = {
-            username: username,
-            email: username,
-            token: data.token,
-            role: data.role
-          };
-          
-          localStorage.setItem('admin', JSON.stringify(adminData));
-          console.log('Admin data stored:', adminData);
-
-          // Show success message
-          if (successMessage) {
-            successMessage.textContent = 'Đăng nhập thành công!';
-            successMessage.style.display = 'block';
-          }
-
-          // Small delay to show success message then redirect
-          setTimeout(() => {
-            console.log('Redirecting to home.html...');
-            window.location.href = 'home.html';
-          }, 1000);
-        } else {
-          throw new Error(data.message || 'Đăng nhập thất bại');
-        }
-      } catch (error) {
-        console.error('Admin login error:', error);
-        if (errorMessage) {
-          errorMessage.textContent = error.message || 'Có lỗi xảy ra khi đăng nhập';
-          errorMessage.style.display = 'block';
-        }
-      }
-    });
-  }
+  // Add logout function for admin
+  window.logout = function() {
+    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      localStorage.removeItem('admin');
+      localStorage.removeItem('user');
+      window.location.href = '../../public/login.html';
+    }
+  };
 });
 
 // Initialize Sidebar
@@ -254,17 +193,13 @@ function initializeReports() {
 async function fetchDashboardStats() {
   try {
     const token = JSON.parse(localStorage.getItem('admin')).token;
-    const response = await fetch('http://localhost:3000/api/admin/stats', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+    // Mock data for now
+    updateDashboardStats({
+      totalUsers: 1234,
+      totalExams: 45,
+      completedExams: 3567,
+      completionRate: 78.5
     });
-    
-    if (!response.ok) throw new Error('Failed to fetch stats');
-    
-    const stats = await response.json();
-    updateDashboardStats(stats);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     showMessage('Không thể tải thống kê. Vui lòng thử lại sau.', 'error');
@@ -273,18 +208,8 @@ async function fetchDashboardStats() {
 
 async function fetchExams() {
   try {
-    const token = JSON.parse(localStorage.getItem('admin')).token;
-    const response = await fetch('http://localhost:3000/api/admin/exams', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) throw new Error('Failed to fetch exams');
-    
-    const exams = await response.json();
-    displayExams(exams);
+    // Mock data for now
+    displayExams([]);
   } catch (error) {
     console.error('Error fetching exams:', error);
     showMessage('Không thể tải danh sách đề thi. Vui lòng thử lại sau.', 'error');
@@ -293,18 +218,8 @@ async function fetchExams() {
 
 async function fetchQuestions() {
   try {
-    const token = JSON.parse(localStorage.getItem('admin')).token;
-    const response = await fetch('http://localhost:3000/api/admin/questions', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) throw new Error('Failed to fetch questions');
-    
-    const questions = await response.json();
-    displayQuestions(questions);
+    // Mock data for now
+    displayQuestions([]);
   } catch (error) {
     console.error('Error fetching questions:', error);
     showMessage('Không thể tải ngân hàng câu hỏi. Vui lòng thử lại sau.', 'error');
@@ -313,18 +228,8 @@ async function fetchQuestions() {
 
 async function fetchReportData() {
   try {
-    const token = JSON.parse(localStorage.getItem('admin')).token;
-    const response = await fetch('http://localhost:3000/api/admin/reports', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) throw new Error('Failed to fetch report data');
-    
-    const reportData = await response.json();
-    displayReportData(reportData);
+    // Mock data for now
+    displayReportData([]);
   } catch (error) {
     console.error('Error fetching report data:', error);
     showMessage('Không thể tải dữ liệu báo cáo. Vui lòng thử lại sau.', 'error');
@@ -333,11 +238,13 @@ async function fetchReportData() {
 
 // Display Functions
 function updateDashboardStats(stats) {
-  // Update stats cards
-  document.querySelector('.stat-card:nth-child(1) p').textContent = stats.totalUsers;
-  document.querySelector('.stat-card:nth-child(2) p').textContent = stats.totalExams;
-  document.querySelector('.stat-card:nth-child(3) p').textContent = stats.completedExams;
-  document.querySelector('.stat-card:nth-child(4) p').textContent = stats.completionRate + '%';
+  const statCards = document.querySelectorAll('.stat-card p');
+  if (statCards.length >= 4) {
+    statCards[0].textContent = stats.totalUsers;
+    statCards[1].textContent = stats.totalExams;
+    statCards[2].textContent = stats.completedExams;
+    statCards[3].textContent = stats.completionRate + '%';
+  }
 }
 
 function displayExams(exams) {
@@ -407,7 +314,7 @@ function displayReportData(data) {
 
 // Utility Functions
 function showSection(sectionId) {
-  const sections = document.querySelectorAll('section');
+  const sections = document.querySelectorAll('section[id]');
   sections.forEach(section => {
     section.style.display = section.id === sectionId ? 'block' : 'none';
   });
@@ -416,14 +323,14 @@ function showSection(sectionId) {
 function showModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.add('show');
+    modal.style.display = 'block';
   }
 }
 
 function hideModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.remove('show');
+    modal.style.display = 'none';
   }
 }
 
@@ -431,6 +338,16 @@ function showMessage(message, type = 'info') {
   const messageElement = document.createElement('div');
   messageElement.className = `message ${type}`;
   messageElement.textContent = message;
+  messageElement.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    background: ${type === 'error' ? '#e74c3c' : '#3498db'};
+    z-index: 9999;
+  `;
   document.body.appendChild(messageElement);
 
   setTimeout(() => {
@@ -438,17 +355,41 @@ function showMessage(message, type = 'info') {
   }, 3000);
 }
 
-function logout() {
-  localStorage.removeItem('admin');
-  window.location.href = 'login.html';
+function initializeCharts() {
+  // Chart initialization will be handled by charts.js
 }
 
-// Initialize modals
-document.querySelectorAll('.modal .close-btn, .modal [data-dismiss="modal"]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const modal = btn.closest('.modal');
-    if (modal) {
-      hideModal(modal.id);
-    }
-  });
-}); 
+// Stub functions for future implementation
+function createExam() {
+  showMessage('Tính năng đang được phát triển', 'info');
+  hideModal('addExamModal');
+}
+
+function createQuestion() {
+  showMessage('Tính năng đang được phát triển', 'info');
+  hideModal('addQuestionModal');
+}
+
+function exportReport() {
+  showMessage('Tính năng đang được phát triển', 'info');
+}
+
+function editExam(id) {
+  showMessage('Tính năng đang được phát triển', 'info');
+}
+
+function deleteExam(id) {
+  showMessage('Tính năng đang được phát triển', 'info');
+}
+
+function editQuestion(id) {
+  showMessage('Tính năng đang được phát triển', 'info');
+}
+
+function deleteQuestion(id) {
+  showMessage('Tính năng đang được phát triển', 'info');
+}
+
+function searchContent(searchTerm) {
+  // Search functionality to be implemented
+} 

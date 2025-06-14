@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Ôn Tập Bảo Hiểm</title>
+  <link rel="stylesheet" href="css/auth.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="form-container">
+    <h1><i class="fas fa-sign-in-alt"></i> Đăng nhập</h1>
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    <form id="loginForm">
+      <div class="input-group">
+        <input type="email" id="email" placeholder="Email" required>
+        <small class="help-text">Sử dụng email đăng ký của bạn</small>
+      </div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Mật khẩu" required>
+      </div>
+      <button type="submit" class="btn">
+        <i class="fas fa-sign-in-alt"></i> Đăng nhập
+      </button>
+    </form>
+    <p>Chưa có tài khoản? <a href="/project/public/register.html">Đăng ký ngay</a></p>
+    <a href="/project/index.html" class="back-home">
+      <i class="fas fa-arrow-left"></i>
+      Quay lại trang chủ
+    </a>
+  </div>
+  <script src="js/login.js"></script>
+</body>
+</html> 
