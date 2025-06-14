@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Luyện Tập - Ôn Tập Bảo Hiểm</title>
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-graduation-cap"></i> Ôn Tập</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="home.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </a>
+                <a href="practice_exam.html" class="nav-item">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Luyện tập</span>
+                </a>
+                <a href="take_exam.html" class="nav-item">
+                    <i class="fas fa-certificate"></i>
+                    <span>Thi chính thức</span>
+                </a>
+                <a href="practice_history.html" class="nav-item active">
+                    <i class="fas fa-history"></i>
+                    <span>Lịch sử luyện tập</span>
+                </a>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-user"></i>
+                    <span>Hồ sơ</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1><i class="fas fa-history"></i> Lịch Sử Luyện Tập</h1>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="loadStats()">
+                        <i class="fas fa-chart-bar"></i> Thống kê
+                    </button>
+                    <button class="btn-primary" onclick="window.location.href='practice_exam.html'">
+                        <i class="fas fa-plus"></i> Luyện tập mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-section" id="statsSection" style="display: none;">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalAttempts">0</h3>
+                            <p>Tổng số lần làm</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="averageScore">0%</h3>
+                            <p>Điểm trung bình</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="bestScore">0%</h3>
+                            <p>Điểm cao nhất</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="practicesAttempted">0</h3>
+                            <p>Đề đã làm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History List -->
+            <div class="history-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Lịch sử chi tiết</h3>
+                        <div class="filter-controls">
+                            <select id="sortBy">
+                                <option value="newest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="highest">Điểm cao nhất</option>
+                                <option value="lowest">Điểm thấp nhất</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading-spinner" id="loadingSpinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Đang tải lịch sử...</p>
+                        </div>
+                        <div class="history-list" id="historyList">
+                            <!-- History items will be loaded here -->
+                        </div>
+                        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                            <button class="btn-secondary" onclick="loadMoreHistory()">
+                                <i class="fas fa-chevron-down"></i> Tải thêm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../public/js/auth.js"></script>
+    <script>
+        let currentPage = 0;
+        const itemsPerPage = 10;
+        let isLoading = false;
+        let hasMoreData = true;
+
+        // Check authentication and load data
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!window.Auth.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            setupEventListeners();
+            loadHistory();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                window.Auth.logout();
+                window.location.href = 'login.html';
+            });
+
+            document.getElementById('sortBy').addEventListener('change', function() {
+                currentPage = 0;
+                hasMoreData = true;
+                document.getElementById('historyList').innerHTML = '';
+                loadHistory();
+            });
+        }
+
+        // Load practice history
+        async function loadHistory() {
+            if (isLoading || !hasMoreData) return;
+            
+            isLoading = true;
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            try {
+                const token = localStorage.getItem('userToken');
+                const offset = currentPage * itemsPerPage;
+                const response = await fetch(`/api/practice/history?limit=${itemsPerPage}&offset=${offset}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải lịch sử luyện tập');
+                }
+
+                const data = await response.json();
+                displayHistory(data.history);
+
+                if (data.history.length < itemsPerPage) {
+                    hasMoreData = false;
+                    document.getElementById('loadMoreContainer').style.display = 'none';
+                } else {
+                    document.getElementById('loadMoreContainer').style.display = 'block';
+                }
+
+                currentPage++;
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showError('Có lỗi khi tải lịch sử luyện tập');
+            } finally {
+                isLoading = false;
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
+        }
+
+        // Display history
+        function displayHistory(history) {
+            const historyList = document.getElementById('historyList');
+            
+            if (currentPage === 0 && history.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Chưa có lịch sử luyện tập</h3>
+                        <p>Bạn chưa hoàn thành bài luyện tập nào. Hãy bắt đầu luyện tập ngay!</p>
+                        <a href="practice_exam.html" class="btn-primary">
+                            <i class="fas fa-play"></i> Bắt đầu luyện tập
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            const historyHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-content">
+                        <div class="history-header">
+                            <h4>${item.practice_title}</h4>
+                            <div class="score-badge ${item.score >= 70 ? 'passed' : 'failed'}">
+                                ${item.score_percentage}
+                            </div>
+                        </div>
+                        <div class="history-details">
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Đúng: ${item.correct_answers}/${item.total_questions}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>${item.date_formatted} ${item.time_formatted}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Thời gian: ${item.time_limit} phút</span>
+                            </div>
+                        </div>
+                        ${item.practice_description ? `
+                            <div class="history-description">
+                                <p>${item.practice_description}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-secondary btn-small" 
+                                onclick="retakePractice(${item.id})" 
+                                title="Làm lại">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            if (currentPage === 0) {
+                historyList.innerHTML = historyHTML;
+            } else {
+                historyList.innerHTML += historyHTML;
+            }
+        }
+
+        // Load more history
+        function loadMoreHistory() {
+            loadHistory();
+        }
+
+        // Load statistics
+        async function loadStats() {
+            const statsSection = document.getElementById('statsSection');
+            
+            if (statsSection.style.display !== 'none') {
+                statsSection.style.display = 'none';
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('userToken');
+                const response = await fetch('/api/practice/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải thống kê');
+                }
+
+                const data = await response.json();
+                displayStats(data.stats);
+                statsSection.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                showError('Có lỗi khi tải thống kê');
+            }
+        }
+
+        // Display statistics
+        function displayStats(stats) {
+            document.getElementById('totalAttempts').textContent = stats.total_attempts;
+            document.getElementById('averageScore').textContent = `${stats.average_score}%`;
+            document.getElementById('bestScore').textContent = `${stats.best_score}%`;
+            document.getElementById('practicesAttempted').textContent = stats.practices_attempted;
+        }
+
+        // Retake practice
+        function retakePractice(practiceId) {
+            // This would need to find the practice ID from the history
+            // For now, just redirect to practice page
+            window.location.href = 'practice_exam.html';
+        }
+
+        // Show error message
+        function showError(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-error';
+            toast.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

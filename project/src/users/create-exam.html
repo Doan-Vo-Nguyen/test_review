@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Đề Thi - Admin</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="form-container">
+    <h1>Tạo Đề Thi</h1>
+    <form id="createExamForm">
+      <input type="text" id="title" placeholder="Tên đề thi" required>
+      <textarea id="description" placeholder="Mô tả đề thi" required></textarea>
+      <input type="number" id="timeLimit" placeholder="Thời gian làm bài (phút)" required>
+      <input type="number" id="numQuestions" placeholder="Số câu hỏi" required>
+      <input type="number" id="passingScore" placeholder="Điểm số đạt" required>
+      <button type="submit" class="btn">Tạo Đề Thi</button>
+    </form>
+  </div>
+
+  <script>
+    // Gửi yêu cầu tạo đề thi đến backend
+    document.getElementById('createExamForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const timeLimit = document.getElementById('timeLimit').value;
+      const numQuestions = document.getElementById('numQuestions').value;
+      const passingScore = document.getElementById('passingScore').value;
+
+      fetch('http://localhost:3000/api/exams/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, timeLimit, numQuestions, passingScore })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === 'Tạo đề thi thành công!') {
+          alert('Đề thi đã được tạo thành công!');
+          window.location.href = 'manage_exams.html';  // Chuyển đến trang quản lý đề thi
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => alert('Lỗi server: ' + error));
+    });
+  </script>
+</body>
+</html>

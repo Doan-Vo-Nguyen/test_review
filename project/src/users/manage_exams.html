@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh Sách Đề Thi - Ôn Tập Bảo Hiểm</title>
+  <link rel="stylesheet" href="../../public/css/exam.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .exam-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .exam-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .exam-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(108, 92, 231, 0.1);
+      border-color: #6c5ce7;
+    }
+
+    .exam-card h3 {
+      color: #2c3e50;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .exam-card-info {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-badge {
+      background: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .info-badge span {
+      display: block;
+      color: #666;
+      margin-bottom: 0.3rem;
+    }
+
+    .info-badge strong {
+      color: #2c3e50;
+      font-size: 1.1rem;
+    }
+
+    .exam-card-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .btn-practice {
+      background: #6c5ce7;
+      color: white;
+    }
+
+    .btn-practice:hover {
+      background: #5849c2;
+    }
+
+    .btn-view {
+      background: white;
+      color: #6c5ce7;
+      border: 2px solid #6c5ce7;
+    }
+
+    .btn-view:hover {
+      background: #f8f9fa;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #6c5ce7;
+    }
+
+    .filter-select {
+      padding: 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 1rem;
+      color: #2c3e50;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #6c5ce7;
+    }
+
+    @media (max-width: 768px) {
+      .exam-list {
+        grid-template-columns: 1fr;
+      }
+
+      .search-bar {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="exam-container">
+    <div class="exam-header">
+      <h1 class="exam-title">Danh Sách Đề Thi</h1>
+      <p>Chọn đề thi để bắt đầu luyện tập hoặc thi thử</p>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" placeholder="Tìm kiếm đề thi..." id="searchInput">
+      <select class="filter-select" id="filterSelect">
+        <option value="all">Tất cả đề thi</option>
+        <option value="new">Mới nhất</option>
+        <option value="popular">Phổ biến nhất</option>
+        <option value="easy">Dễ</option>
+        <option value="medium">Trung bình</option>
+        <option value="hard">Khó</option>
+      </select>
+    </div>
+
+    <div class="exam-list" id="examList">
+      <!-- Exam cards will be populated here -->
+    </div>
+  </div>
+
+  <script>
+    // Load exam list
+    window.onload = async function() {
+      try {
+        const response = await fetch('http://localhost:3000/api/exams');
+        const data = await response.json();
+        
+        const examList = document.getElementById('examList');
+        data.exams.forEach(exam => {
+          examList.innerHTML += generateExamCard(exam);
+        });
+
+        // Add search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', filterExams);
+
+        // Add filter functionality
+        const filterSelect = document.getElementById('filterSelect');
+        filterSelect.addEventListener('change', filterExams);
+      } catch (error) {
+        console.error('Error loading exams:', error);
+        alert('Có lỗi khi tải danh sách đề thi. Vui lòng thử lại sau.');
+      }
+    };
+
+    // Generate exam card HTML
+    function generateExamCard(exam) {
+      return `
+        <div class="exam-card" data-exam-id="${exam.id}">
+          <h3>${exam.title}</h3>
+          <div class="exam-card-info">
+            <div class="info-badge">
+              <span>Thời gian</span>
+              <strong>${exam.time_limit} phút</strong>
+            </div>
+            <div class="info-badge">
+              <span>Số câu</span>
+              <strong>${exam.num_questions}</strong>
+            </div>
+            <div class="info-badge">
+              <span>Điểm đạt</span>
+              <strong>${exam.passing_score}%</strong>
+            </div>
+            <div class="info-badge">
+              <span>Độ khó</span>
+              <strong>${getDifficultyText(exam.difficulty)}</strong>
+            </div>
+          </div>
+          <div class="exam-card-actions">
+            <a href="practice_exam.html?id=${exam.id}" class="action-btn btn-practice">Làm Bài</a>
+            <a href="#" class="action-btn btn-view" onclick="viewExamDetails(${exam.id})">Chi Tiết</a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Get difficulty text
+    function getDifficultyText(difficulty) {
+      const difficulties = {
+        easy: 'Dễ',
+        medium: 'Trung bình',
+        hard: 'Khó'
+      };
+      return difficulties[difficulty] || 'Trung bình';
+    }
+
+    // Filter exams based on search and filter
+    function filterExams() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const filterValue = document.getElementById('filterSelect').value;
+      const examCards = document.querySelectorAll('.exam-card');
+
+      examCards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const difficulty = card.querySelector('.info-badge:last-child strong').textContent.toLowerCase();
+        
+        let showCard = title.includes(searchTerm);
+        
+        if (filterValue !== 'all') {
+          if (filterValue === 'easy' && difficulty !== 'dễ') showCard = false;
+          if (filterValue === 'medium' && difficulty !== 'trung bình') showCard = false;
+          if (filterValue === 'hard' && difficulty !== 'khó') showCard = false;
+        }
+
+        card.style.display = showCard ? 'block' : 'none';
+      });
+    }
+
+    // View exam details
+    function viewExamDetails(examId) {
+      // Implement exam details view
+      alert('Chức năng xem chi tiết đang được phát triển');
+    }
+  </script>
+</body>
+</html>

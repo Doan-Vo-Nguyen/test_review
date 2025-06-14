@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ôn Tập Bảo Hiểm - Luyện Tập</title>
+  <link rel="stylesheet" href="../../public/css/exam.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Đang tải đề luyện tập...</p>
+    </div>
+  </div>
+
+  <!-- Exam Selection Screen -->
+  <div class="exam-selection" id="examSelection">
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-dumbbell"></i> Chọn Đề Luyện Tập</h1>
+        <p>Ôn tập kiến thức với các đề thi thử - Không giới hạn số lần làm bài</p>
+        <div class="practice-benefits">
+          <div class="benefit-item">
+            <i class="fas fa-redo"></i>
+            <span>Làm lại nhiều lần</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-pause"></i>
+            <span>Tạm dừng được</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-eye"></i>
+            <span>Xem đáp án ngay</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Phân tích chi tiết</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="exam-list" id="examList">
+        <!-- Exams will be populated here -->
+      </div>
+      
+      <div class="back-btn-container">
+        <button onclick="window.location.href='home.html'" class="btn-back">
+          <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Progress Bar -->
+  <div class="exam-progress" id="examProgress" style="display: none;">
+    <div class="timer" id="timer">00:00:00</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressBar"></div>
+    </div>
+    <div class="question-counter" id="questionCounter">0/0</div>
+    <div class="exam-actions">
+      <button class="btn-pause" id="pauseBtn" title="Tạm dừng">
+        <i class="fas fa-pause"></i>
+      </button>
+      <button class="btn-submit" id="earlySubmitBtn" title="Nộp bài sớm">
+        <i class="fas fa-check"></i> Nộp bài
+      </button>
+    </div>
+  </div>
+
+  <!-- Exam Container -->
+  <div class="exam-container" id="examContainer" style="display: none;">
+    <div class="exam-header">
+      <h1 class="exam-title" id="examTitle">Bài Luyện Tập</h1>
+      <div class="exam-info">
+        <div class="info-item">
+          <div class="info-label">Thời gian</div>
+          <div class="info-value" id="timeLimit">45 phút</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Số câu hỏi</div>
+          <div class="info-value" id="totalQuestions">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Điểm đạt</div>
+          <div class="info-value" id="passingScore">80%</div>
+        </div>
+      </div>
+    </div>
+
+    <form id="examForm">
+      <div id="questionsContainer"></div>
+      
+      <div class="submit-container">
+        <button type="button" class="btn-secondary" id="reviewBtn">
+          <i class="fas fa-eye"></i> Xem lại
+        </button>
+        <button type="submit" class="submit-btn">
+          <i class="fas fa-paper-plane"></i> Nộp Bài
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Review Modal -->
+  <div class="modal" id="reviewModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-list-check"></i> Xem lại bài làm</h3>
+        <button class="modal-close" id="closeReviewModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="review-summary" id="reviewSummary"></div>
+        <div class="review-questions" id="reviewQuestions"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="closeReview">Đóng</button>
+        <button class="submit-btn" id="submitFromReview">Nộp bài</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="results-modal" id="resultsModal">
+    <div class="modal-content">
+      <div class="results-header">
+        <h2><i class="fas fa-trophy"></i> Kết Quả Luyện Tập</h2>
+        <div class="results-score" id="finalScore">0%</div>
+      </div>
+      <div class="results-details" id="resultsDetails">
+        <!-- Results will be populated here -->
+      </div>
+      <div class="detailed-results" id="detailedResults">
+        <!-- Detailed answers will be shown here -->
+      </div>
+      <div class="submit-container">
+        <button onclick="startNewExam()" class="btn-secondary">
+          <i class="fas fa-redo"></i> Làm lại
+        </button>
+        <button onclick="window.location.href='home.html'" class="submit-btn">
+          <i class="fas fa-home"></i> Về trang chủ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal" id="confirmModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-question-circle"></i> Xác nhận</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage">Bạn có chắc chắn muốn nộp bài?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelConfirm">Hủy</button>
+        <button class="btn-danger" id="proceedConfirm">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../public/js/auth.js"></script>
+  <script>
+    let examData = null;
+    let timeLeft = 0;
+    let timerInterval = null;
+    let startTime = null;
+    let isPaused = false;
+    let selectedExamId = null;
+
+    // Check authentication on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!window.Auth.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+      }
+      loadAvailableExams();
+    });
+
+    // Load available practice exams
+    async function loadAvailableExams() {
+      try {
+        showLoading();
+        const token = localStorage.getItem('userToken');
+        console.log('Loading practice exams with token:', token);
+        
+        // Try the new practice API first
+        let response = await fetch('/api/practice/available', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          console.log('Practice API failed, trying fallback...');
+          // Fallback to simple API
+          response = await fetch('/api/practice/simple');
+        }
+
+        if (!response.ok) {
+          throw new Error('Không thể tải danh sách đề luyện tập');
+        }
+
+        const data = await response.json();
+        displayExamList(data.exams);
+        hideLoading();
+      } catch (error) {
+        console.error('Error loading practice exams:', error);
+        showError('Có lỗi khi tải danh sách đề luyện tập: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Display exam list
+    function displayExamList(exams) {
+      const examList = document.getElementById('examList');
+      
+      if (exams.length === 0) {
+        examList.innerHTML = `
+          <div class="no-exams">
+            <i class="fas fa-inbox"></i>
+            <h3>Không có đề luyện tập nào</h3>
+            <p>Hiện tại chưa có đề luyện tập nào khả dụng.</p>
+          </div>
+        `;
+        return;
+      }
+
+      examList.innerHTML = exams.map(exam => `
+        <div class="exam-card" onclick="selectExam(${exam.id})">
+          <div class="exam-card-header">
+            <h3>${exam.title}</h3>
+            <div class="exam-stats">
+              <span class="stat-item">
+                <i class="fas fa-clock"></i> ${exam.time_limit} phút
+              </span>
+              <span class="stat-item">
+                <i class="fas fa-question-circle"></i> ${exam.actual_question_count || exam.question_count} câu
+              </span>
+            </div>
+          </div>
+          <div class="exam-card-body">
+            <p>${exam.description || 'Không có mô tả'}</p>
+            <div class="exam-progress-info">
+              <div class="progress-item">
+                <span class="label">Số lần thử:</span>
+                <span class="value">${exam.attempt_count}</span>
+              </div>
+              <div class="progress-item">
+                <span class="label">Điểm cao nhất:</span>
+                <span class="value ${exam.best_score >= 70 ? 'passed' : 'failed'}">
+                  ${exam.best_score}%
+                </span>
+              </div>
+              ${exam.last_attempt ? `
+                <div class="progress-item">
+                  <span class="label">Lần cuối:</span>
+                  <span class="value">${new Date(exam.last_attempt).toLocaleDateString('vi-VN')}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          <div class="exam-card-footer">
+            <button class="btn-practice">
+              <i class="fas fa-play"></i> Bắt đầu luyện tập
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Select and start exam
+    async function selectExam(practiceId) {
+      selectedExamId = practiceId;
+      try {
+        showLoading();
+        const token = localStorage.getItem('userToken');
+        const response = await fetch('/api/practice/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ practiceId: practiceId })
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể bắt đầu bài luyện tập');
+        }
+
+        const data = await response.json();
+        examData = data;
+        startExam();
+        hideLoading();
+      } catch (error) {
+        console.error('Error starting practice:', error);
+        showError('Có lỗi khi bắt đầu bài luyện tập: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Start exam
+    function startExam() {
+      document.getElementById('examSelection').style.display = 'none';
+      document.getElementById('examProgress').style.display = 'flex';
+      document.getElementById('examContainer').style.display = 'block';
+
+      // Update exam info - using practice data structure
+      document.getElementById('examTitle').textContent = examData.practice.title;
+      document.getElementById('timeLimit').textContent = `${examData.practice.time_limit} phút`;
+      document.getElementById('totalQuestions').textContent = examData.questions.length;
+      document.getElementById('passingScore').textContent = `70%`; // Default passing score for practice
+
+      // Generate questions
+      generateQuestions();
+
+      // Start timer
+      startTime = new Date();
+      startTimer(examData.practice.time_limit);
+
+      // Add event listeners
+      setupEventListeners();
+    }
+
+    // Generate questions HTML
+    function generateQuestions() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = examData.questions.map((question, index) => 
+        generateQuestionHTML(question, index)
+      ).join('');
+
+      updateProgress();
+    }
+
+    // Generate single question HTML
+    function generateQuestionHTML(question, index) {
+      return `
+        <div class="question-container" data-question-id="${question.id}">
+          <div class="question-header">
+            <span class="question-number">Câu ${index + 1}</span>
+            <span class="question-type">${getQuestionTypeText(question.question_type)}</span>
+          </div>
+          <div class="question-text">
+            ${question.question_text}
+          </div>
+          <div class="options-container">
+            ${generateOptionsHTML(question, index)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Generate options HTML
+    function generateOptionsHTML(question, index) {
+      if (question.question_type === 'multiple_choice' && question.options) {
+        return question.options.map((option, i) => `
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="${option}" id="q${question.id}opt${i}">
+            <label for="q${question.id}opt${i}">${option}</label>
+          </div>
+        `).join('');
+      } else if (question.question_type === 'true_false') {
+        return `
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="true" id="q${question.id}true">
+            <label for="q${question.id}true">Đúng</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="false" id="q${question.id}false">
+            <label for="q${question.id}false">Sai</label>
+          </div>
+        `;
+      }
+      return '';
+    }
+
+    // Get question type text
+    function getQuestionTypeText(type) {
+      switch(type) {
+        case 'multiple_choice': return 'Trắc nghiệm';
+        case 'true_false': return 'Đúng/Sai';
+        default: return 'Khác';
+      }
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Progress tracking
+      document.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('change', updateProgress);
+      });
+
+      // Form submission
+      document.getElementById('examForm').addEventListener('submit', handleSubmit);
+
+      // Review button
+      document.getElementById('reviewBtn').addEventListener('click', showReview);
+
+      // Early submit
+      document.getElementById('earlySubmitBtn').addEventListener('click', function() {
+        showConfirmation('Bạn có chắc chắn muốn nộp bài sớm?', submitExam);
+      });
+
+      // Pause button
+      document.getElementById('pauseBtn').addEventListener('click', togglePause);
+
+      // Modal events
+      setupModalEvents();
+    }
+
+    // Setup modal events
+    function setupModalEvents() {
+      // Review modal
+      document.getElementById('closeReviewModal').addEventListener('click', closeReview);
+      document.getElementById('closeReview').addEventListener('click', closeReview);
+      document.getElementById('submitFromReview').addEventListener('click', function() {
+        closeReview();
+        showConfirmation('Bạn có chắc chắn muốn nộp bài?', submitExam);
+      });
+
+      // Confirmation modal
+      document.getElementById('cancelConfirm').addEventListener('click', closeConfirmation);
+      document.getElementById('proceedConfirm').addEventListener('click', function() {
+        closeConfirmation();
+        if (window.confirmCallback) {
+          window.confirmCallback();
+        }
+      });
+    }
+
+    // Format time display
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // Start timer
+    function startTimer(duration) {
+      timeLeft = duration * 60;
+      updateTimerDisplay();
+      
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          timeLeft--;
+          updateTimerDisplay();
+          
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            autoSubmit();
+          }
+        }
+      }, 1000);
+    }
+
+    // Update timer display
+    function updateTimerDisplay() {
+      const timerElement = document.getElementById('timer');
+      timerElement.textContent = formatTime(timeLeft);
+      
+      // Change color when time is running low
+      if (timeLeft < 300) { // 5 minutes
+        timerElement.classList.add('warning');
+      }
+      if (timeLeft < 60) { // 1 minute
+        timerElement.classList.add('danger');
+      }
+    }
+
+    // Toggle pause
+    function togglePause() {
+      isPaused = !isPaused;
+      const pauseBtn = document.getElementById('pauseBtn');
+      
+      if (isPaused) {
+        pauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        pauseBtn.title = 'Tiếp tục';
+        showInfo('Bài thi đã được tạm dừng');
+      } else {
+        pauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        pauseBtn.title = 'Tạm dừng';
+        showInfo('Bài thi đã được tiếp tục');
+      }
+    }
+
+    // Update progress
+    function updateProgress() {
+      const total = examData.questions.length;
+      const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / total) * 100;
+      
+      document.getElementById('progressBar').style.width = `${percentage}%`;
+      document.getElementById('questionCounter').textContent = `${answered}/${total}`;
+    }
+
+    // Handle form submission
+    function handleSubmit(event) {
+      event.preventDefault();
+      showConfirmation('Bạn có chắc chắn muốn nộp bài?', submitExam);
+    }
+
+    // Auto submit when time runs out
+    function autoSubmit() {
+      showInfo('Hết giờ! Bài thi sẽ được nộp tự động.', 'warning');
+      setTimeout(submitExam, 2000);
+    }
+
+    // Submit exam
+    async function submitExam() {
+      try {
+        clearInterval(timerInterval);
+        showLoading();
+
+        const formData = new FormData(document.getElementById('examForm'));
+        const answers = {};
+        
+        // Collect answers
+        examData.questions.forEach(question => {
+          const answer = formData.get(`question${question.id}`);
+          answers[question.id] = answer;
+        });
+
+        const timeSpent = Math.floor((new Date() - startTime) / 1000);
+
+        const token = localStorage.getItem('userToken');
+        const response = await fetch('/api/practice/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            practiceId: selectedExamId,
+            answers: answers,
+            timeSpent: timeSpent
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể nộp bài luyện tập');
+        }
+
+        const result = await response.json();
+        showResults(result);
+        hideLoading();
+      } catch (error) {
+        console.error('Error submitting practice:', error);
+        showError('Có lỗi khi nộp bài: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Show results
+    function showResults(data) {
+      const { result, detailedAnswers, summary } = data;
+      
+      // Hide exam interface
+      document.getElementById('examProgress').style.display = 'none';
+      document.getElementById('examContainer').style.display = 'none';
+      
+      // Show results
+      const modal = document.getElementById('resultsModal');
+      const scoreElement = document.getElementById('finalScore');
+      
+      scoreElement.textContent = summary.scorePercentage;
+      scoreElement.style.color = result.score >= 70 ? '#2ecc71' : '#e74c3c'; // Using 70% as default passing score
+      
+      // Results details
+      document.getElementById('resultsDetails').innerHTML = `
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">Điểm số</div>
+            <div class="result-value">${summary.scorePercentage}</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Câu đúng</div>
+            <div class="result-value">${result.correctAnswers}/${result.totalQuestions}</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Thời gian</div>
+            <div class="result-value">${summary.timeSpent}</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Kết quả</div>
+            <div class="result-value ${result.score >= 70 ? 'passed' : 'failed'}">
+              ${result.score >= 70 ? 'Tốt' : 'Cần cải thiện'}
+            </div>
+          </div>
+        </div>
+        
+        <div class="performance-analysis">
+          <h4><i class="fas fa-chart-bar"></i> Phân tích kết quả</h4>
+          <div class="analysis-content">
+            ${generatePerformanceAnalysis(result)}
+          </div>
+        </div>
+      `;
+      
+      // Detailed answers
+      if (detailedAnswers && detailedAnswers.length > 0) {
+        document.getElementById('detailedResults').innerHTML = `
+          <div class="detailed-answers">
+            <h4><i class="fas fa-list-alt"></i> Chi tiết từng câu hỏi</h4>
+            <div class="answers-list">
+              ${detailedAnswers.map((answer, index) => generateAnswerHTML(answer, index)).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      modal.style.display = 'block';
+    }
+
+    // Generate performance analysis
+    function generatePerformanceAnalysis(result) {
+      let analysis = '';
+      
+      if (result.score >= 70) {
+        analysis += '<div class="analysis-item success"><i class="fas fa-check-circle"></i> Chúc mừng! Bạn đã đạt kết quả tốt trong bài luyện tập.</div>';
+      } else {
+        analysis += '<div class="analysis-item warning"><i class="fas fa-exclamation-triangle"></i> Bạn cần ôn tập thêm để cải thiện kết quả.</div>';
+      }
+      
+      const accuracy = (result.correctAnswers / result.totalQuestions) * 100;
+      if (accuracy >= 80) {
+        analysis += '<div class="analysis-item info"><i class="fas fa-star"></i> Độ chính xác cao, bạn đã nắm vững kiến thức.</div>';
+      } else if (accuracy >= 60) {
+        analysis += '<div class="analysis-item info"><i class="fas fa-chart-line"></i> Độ chính xác khá tốt, tiếp tục cố gắng.</div>';
+      } else {
+        analysis += '<div class="analysis-item warning"><i class="fas fa-book"></i> Cần ôn tập thêm để cải thiện độ chính xác.</div>';
+      }
+      
+      if (result.duration && examData.practice && result.duration < (examData.practice.time_limit * 60 * 0.5)) {
+        analysis += '<div class="analysis-item info"><i class="fas fa-clock"></i> Bạn hoàn thành khá nhanh, hãy chắc chắn đã đọc kỹ câu hỏi.</div>';
+      }
+      
+      analysis += '<div class="analysis-item info"><i class="fas fa-redo"></i> Đây là bài luyện tập, bạn có thể làm lại nhiều lần để cải thiện kết quả.</div>';
+      
+      return analysis;
+    }
+
+    // Generate detailed answer HTML
+    function generateAnswerHTML(answer, index) {
+      const isCorrect = answer.is_correct;
+      const statusClass = isCorrect ? 'correct' : 'incorrect';
+      const statusIcon = isCorrect ? 'fa-check-circle' : 'fa-times-circle';
+      
+      return `
+        <div class="answer-item ${statusClass}">
+          <div class="answer-header">
+            <span class="question-num">Câu ${index + 1}</span>
+            <span class="answer-status">
+              <i class="fas ${statusIcon}"></i>
+              ${isCorrect ? 'Đúng' : 'Sai'}
+            </span>
+          </div>
+          <div class="answer-content">
+            <div class="question-text">${answer.question_text}</div>
+            <div class="answer-details">
+              <div class="user-answer">
+                <strong>Bạn chọn:</strong> 
+                <span class="answer-value ${isCorrect ? 'correct' : 'incorrect'}">
+                  ${answer.user_answer || 'Không trả lời'}
+                </span>
+              </div>
+              ${!isCorrect ? `
+                <div class="correct-answer">
+                  <strong>Đáp án đúng:</strong> 
+                  <span class="answer-value correct">${answer.correct_answer}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Show review modal
+    function showReview() {
+      const modal = document.getElementById('reviewModal');
+      const formData = new FormData(document.getElementById('examForm'));
+      
+      // Generate summary
+      const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+      const total = examData.questions.length;
+      
+      document.getElementById('reviewSummary').innerHTML = `
+        <div class="review-stats">
+          <div class="stat-item">
+            <span class="label">Đã trả lời:</span>
+            <span class="value">${answered}/${total}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Còn lại:</span>
+            <span class="value">${total - answered}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Thời gian còn lại:</span>
+            <span class="value">${formatTime(timeLeft)}</span>
+          </div>
+        </div>
+      `;
+      
+      // Generate question review
+      const reviewQuestions = examData.questions.map((question, index) => {
+        const userAnswer = formData.get(`question${question.id}`);
+        const isAnswered = !!userAnswer;
+        
+        return `
+          <div class="review-question ${isAnswered ? 'answered' : 'unanswered'}" 
+               onclick="scrollToQuestion(${question.id})">
+            <div class="review-question-header">
+              <span class="question-num">Câu ${index + 1}</span>
+              <span class="status ${isAnswered ? 'answered' : 'unanswered'}">
+                <i class="fas ${isAnswered ? 'fa-check' : 'fa-question'}"></i>
+                ${isAnswered ? 'Đã trả lời' : 'Chưa trả lời'}
+              </span>
+            </div>
+            <div class="review-question-text">${question.question_text.substring(0, 100)}...</div>
+            ${isAnswered ? `<div class="user-answer">Đáp án: ${userAnswer}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      
+      document.getElementById('reviewQuestions').innerHTML = reviewQuestions;
+      modal.style.display = 'block';
+    }
+
+    // Close review modal
+    function closeReview() {
+      document.getElementById('reviewModal').style.display = 'none';
+    }
+
+    // Scroll to specific question
+    function scrollToQuestion(questionId) {
+      closeReview();
+      const questionElement = document.querySelector(`[data-question-id="${questionId}"]`);
+      if (questionElement) {
+        questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        questionElement.classList.add('highlight');
+        setTimeout(() => questionElement.classList.remove('highlight'), 2000);
+      }
+    }
+
+    // Show confirmation modal
+    function showConfirmation(message, callback) {
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmModal').style.display = 'block';
+      window.confirmCallback = callback;
+    }
+
+    // Close confirmation modal
+    function closeConfirmation() {
+      document.getElementById('confirmModal').style.display = 'none';
+      window.confirmCallback = null;
+    }
+
+    // Start new exam
+    function startNewExam() {
+      document.getElementById('resultsModal').style.display = 'none';
+      document.getElementById('examSelection').style.display = 'block';
+      
+      // Reset variables
+      examData = null;
+      timeLeft = 0;
+      startTime = null;
+      isPaused = false;
+      selectedExamId = null;
+      
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+      
+      // Reload available exams
+      loadAvailableExams();
+    }
+
+    // Utility functions
+    function showLoading() {
+      document.getElementById('loadingScreen').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingScreen').style.display = 'none';
+    }
+
+    function showError(message) {
+      alert('Lỗi: ' + message);
+    }
+
+    function showInfo(message, type = 'info') {
+      // Create a toast notification
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+
+    // Prevent accidental page refresh
+    window.addEventListener('beforeunload', function(e) {
+      if (examData && timeLeft > 0) {
+        const message = 'Bạn đang trong quá trình làm bài. Rời khỏi trang sẽ mất tiến trình hiện tại.';
+        e.returnValue = message;
+        return message;
+      }
+    });
+  </script>
+</body>
+</html>

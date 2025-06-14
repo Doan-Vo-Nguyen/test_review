@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký - Ôn Tập Bảo Hiểm</title>
+  <link rel="stylesheet" href="../../public/css/auth.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="../../public/js/auth.js"></script>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Đăng ký</h1>
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    <form id="registerForm">
+      <div class="input-group">
+        <input type="text" id="name" placeholder="Họ và tên" required>
+      </div>
+      <div class="input-group">
+        <input type="email" id="email" placeholder="Email" required>
+      </div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Mật khẩu" required>
+      </div>
+      <div class="input-group">
+        <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+      </div>
+      <button type="submit" class="btn">
+        <i class="fas fa-user-plus"></i> Đăng ký
+      </button>
+    </form>
+    <p>Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a></p>
+    <a href="../../index.html" class="back-home">
+      <i class="fas fa-arrow-left"></i>
+      Quay lại trang chủ
+    </a>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
+      
+      // Hide previous messages
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Mật khẩu xác nhận không khớp';
+        return;
+      }
+      
+      try {
+        // For demo purposes, simulate successful registration
+        const userData = {
+          name: name || 'User',
+          email: email || '',
+          id: Date.now()
+        };
+        
+        const token = 'mock-token-' + Date.now();
+        
+        // Auto-login after successful registration
+        window.Auth.login(token, userData);
+        
+        // Show success message
+        successMessage.style.display = 'block';
+        successMessage.textContent = 'Đăng ký thành công!';
+        
+        // Redirect to home page
+        setTimeout(() => {
+          window.location.replace('home.html');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = error.message || 'Có lỗi xảy ra khi đăng ký';
+      }
+    });
+  </script>
+</body>
+</html>

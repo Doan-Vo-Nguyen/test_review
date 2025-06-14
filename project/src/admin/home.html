@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Hệ Thống Thi Trắc Nghiệm</title>
+  <link rel="stylesheet" href="../project/public/css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar admin-sidebar">
+      <div class="sidebar-header">
+        <h2><i class="fas fa-user-shield"></i> Admin Panel</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li class="active">
+            <a href="#dashboard"><i class="fas fa-chart-line"></i> Thống kê</a>
+          </li>
+          <li>
+            <a href="#exams"><i class="fas fa-file-alt"></i> Quản lý đề thi</a>
+          </li>
+          <li>
+            <a href="#questions"><i class="fas fa-question-circle"></i> Ngân hàng câu hỏi</a>
+          </li>
+          <li>
+            <a href="#users"><i class="fas fa-users"></i> Quản lý người dùng</a>
+          </li>
+          <li>
+            <a href="#reports"><i class="fas fa-chart-bar"></i> Báo cáo</a>
+          </li>
+          <li>
+            <a href="#settings"><i class="fas fa-cog"></i> Cài đặt</a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="main-header">
+        <div class="header-left">
+          <button id="toggleSidebar" class="btn-icon">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Tìm kiếm...">
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="notifications">
+            <i class="fas fa-bell"></i>
+            <span class="badge">3</span>
+          </div>
+          <div class="user-profile">
+            <img src="https://via.placeholder.com/40" alt="Admin Avatar" class="avatar">
+            <span id="adminName">Admin</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="dashboard-section">
+          <div class="section-header">
+            <h2>Thống kê tổng quan</h2>
+          </div>
+          
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <i class="fas fa-users"></i>
+              <div class="stat-info">
+                <h3>Tổng số người dùng</h3>
+                <p>1,234</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-file-alt"></i>
+              <div class="stat-info">
+                <h3>Tổng số đề thi</h3>
+                <p>45</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-check-circle"></i>
+              <div class="stat-info">
+                <h3>Bài thi đã hoàn thành</h3>
+                <p>3,567</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-chart-line"></i>
+              <div class="stat-info">
+                <h3>Tỷ lệ hoàn thành</h3>
+                <p>78.5%</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Charts -->
+          <div class="charts-container">
+            <div class="chart-card">
+              <h3>Tiến độ làm bài theo chủ đề</h3>
+              <div class="chart-area" id="topicProgressChart">
+                <!-- Chart will be rendered here -->
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Phân bố điểm số</h3>
+              <div class="chart-area" id="scoreDistributionChart">
+                <!-- Chart will be rendered here -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Exam Management Section -->
+        <section id="exams" class="exams-section" style="display: none;">
+          <div class="section-header">
+            <h2>Quản lý đề thi</h2>
+            <button class="btn btn-primary" id="addExamBtn">
+              <i class="fas fa-plus"></i> Thêm đề thi mới
+            </button>
+          </div>
+          
+          <!-- Exam Filters -->
+          <div class="filters">
+            <div class="filter-group">
+              <label>Chủ đề:</label>
+              <select id="topicFilter">
+                <option value="">Tất cả</option>
+                <!-- Topics will be loaded dynamically -->
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Trạng thái:</label>
+              <select id="statusFilter">
+                <option value="">Tất cả</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="draft">Bản nháp</option>
+                <option value="archived">Đã lưu trữ</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Exams Table -->
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên đề thi</th>
+                  <th>Chủ đề</th>
+                  <th>Số câu hỏi</th>
+                  <th>Thời gian</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="examsTableBody">
+                <!-- Exam rows will be loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Question Bank Section -->
+        <section id="questions" class="questions-section" style="display: none;">
+          <div class="section-header">
+            <h2>Ngân hàng câu hỏi</h2>
+            <button class="btn btn-primary" id="addQuestionBtn">
+              <i class="fas fa-plus"></i> Thêm câu hỏi mới
+            </button>
+          </div>
+
+          <!-- Question Filters -->
+          <div class="filters">
+            <div class="filter-group">
+              <label>Chủ đề:</label>
+              <select id="questionTopicFilter">
+                <option value="">Tất cả</option>
+                <!-- Topics will be loaded dynamically -->
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Độ khó:</label>
+              <select id="difficultyFilter">
+                <option value="">Tất cả</option>
+                <option value="easy">Dễ</option>
+                <option value="medium">Trung bình</option>
+                <option value="hard">Khó</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Questions Table -->
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Câu hỏi</th>
+                  <th>Chủ đề</th>
+                  <th>Độ khó</th>
+                  <th>Số lần sử dụng</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="questionsTableBody">
+                <!-- Question rows will be loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="reports-section" style="display: none;">
+          <div class="section-header">
+            <h2>Báo cáo thống kê</h2>
+          </div>
+
+          <!-- Report Cards -->
+          <div class="report-cards">
+            <div class="report-card">
+              <h3>Tỷ lệ hoàn thành theo chủ đề</h3>
+              <div class="chart-area" id="topicCompletionChart">
+                <!-- Chart will be rendered here -->
+              </div>
+            </div>
+            <div class="report-card">
+              <h3>Xu hướng làm bài</h3>
+              <div class="chart-area" id="examTrendChart">
+                <!-- Chart will be rendered here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Reports -->
+          <div class="detailed-reports">
+            <h3>Báo cáo chi tiết</h3>
+            <div class="report-filters">
+              <div class="filter-group">
+                <label>Thời gian:</label>
+                <select id="timeRangeFilter">
+                  <option value="week">7 ngày qua</option>
+                  <option value="month">30 ngày qua</option>
+                  <option value="quarter">3 tháng qua</option>
+                  <option value="year">1 năm qua</option>
+                </select>
+              </div>
+              <button class="btn btn-secondary" id="exportReportBtn">
+                <i class="fas fa-download"></i> Xuất báo cáo
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Chủ đề</th>
+                    <th>Tổng người dùng</th>
+                    <th>Đã hoàn thành</th>
+                    <th>Chưa hoàn thành</th>
+                    <th>Tỷ lệ hoàn thành</th>
+                    <th>Điểm trung bình</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                  <!-- Report rows will be loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Templates -->
+  <div class="modal" id="addExamModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Thêm đề thi mới</h3>
+        <button class="close-btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="addExamForm">
+          <div class="form-group">
+            <label>Tên đề thi</label>
+            <input type="text" id="examTitle" required>
+          </div>
+          <div class="form-group">
+            <label>Chủ đề</label>
+            <select id="examTopic" required>
+              <!-- Topics will be loaded dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Thời gian làm bài (phút)</label>
+            <input type="number" id="examDuration" required>
+          </div>
+          <div class="form-group">
+            <label>Số câu hỏi</label>
+            <input type="number" id="questionCount" required>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-primary">Tạo đề thi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="addQuestionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Thêm câu hỏi mới</h3>
+        <button class="close-btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionForm">
+          <div class="form-group">
+            <label>Câu hỏi</label>
+            <textarea id="questionText" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Chủ đề</label>
+            <select id="questionTopic" required>
+              <!-- Topics will be loaded dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Độ khó</label>
+            <select id="questionDifficulty" required>
+              <option value="easy">Dễ</option>
+              <option value="medium">Trung bình</option>
+              <option value="hard">Khó</option>
+            </select>
+          </div>
+          <div class="answers-container">
+            <label>Các đáp án</label>
+            <div class="answer-group">
+              <input type="text" class="answer-input" placeholder="Đáp án A" required>
+              <input type="radio" name="correctAnswer" value="A" required>
+            </div>
+            <div class="answer-group">
+              <input type="text" class="answer-input" placeholder="Đáp án B" required>
+              <input type="radio" name="correctAnswer" value="B" required>
+            </div>
+            <div class="answer-group">
+              <input type="text" class="answer-input" placeholder="Đáp án C" required>
+              <input type="radio" name="correctAnswer" value="C" required>
+            </div>
+            <div class="answer-group">
+              <input type="text" class="answer-input" placeholder="Đáp án D" required>
+              <input type="radio" name="correctAnswer" value="D" required>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-primary">Thêm câu hỏi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/charts.js"></script>
+</body>
+</html> 

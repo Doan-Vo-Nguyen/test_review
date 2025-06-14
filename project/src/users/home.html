@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ - Ôn Tập Bảo Hiểm</title>
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="../../public/js/auth.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../../public/images/logo.png" alt="Logo" class="logo">
+                <h2>Ôn Tập Bảo Hiểm</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="home.html" class="nav-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </a>
+                <a href="manage_exams.html" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>Đề thi</span>
+                </a>
+                <a href="practice_exam.html" class="nav-item">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Luyện tập</span>
+                </a>
+                <a href="take_exam.html" class="nav-item">
+                    <i class="fas fa-certificate"></i>
+                    <span>Thi chính thức</span>
+                </a>
+                <a href="history.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Lịch sử</span>
+                </a>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-user"></i>
+                    <span>Hồ sơ</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm...">
+                </div>
+                <div class="header-right">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../../public/images/avatar.png" alt="Avatar">
+                        <span id="userName">Nguyễn Văn A</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Quick Access Cards -->
+                <div class="quick-access-section">
+                    <h2>Truy cập nhanh</h2>
+                    <div class="quick-access-cards">
+                        <div class="access-card practice">
+                            <div class="card-icon">
+                                <i class="fas fa-dumbbell"></i>
+                            </div>
+                            <div class="card-content">
+                                <h3>Luyện tập</h3>
+                                <p>Ôn tập kiến thức với các đề thi thử. Không giới hạn số lần làm bài.</p>
+                                <a href="practice_exam.html" class="btn-card">
+                                    <i class="fas fa-play"></i> Bắt đầu luyện tập
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="access-card exam">
+                            <div class="card-icon">
+                                <i class="fas fa-certificate"></i>
+                            </div>
+                            <div class="card-content">
+                                <h3>Thi chính thức</h3>
+                                <p>Tham gia các bài thi chính thức để lấy chứng chỉ. Chỉ được làm một lần.</p>
+                                <a href="take_exam.html" class="btn-card">
+                                    <i class="fas fa-play-circle"></i> Bắt đầu thi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <i class="fas fa-book-reader"></i>
+                        <div class="stat-info">
+                            <h3>Chủ đề đã hoàn thành</h3>
+                            <p>12/20</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="stat-info">
+                            <h3>Bài thi đã làm</h3>
+                            <p>8</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="stat-info">
+                            <h3>Điểm trung bình</h3>
+                            <p>8.5</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <section class="recent-activity">
+                    <h2>Hoạt động gần đây</h2>
+                    <div class="activity-list">
+                        <!-- Activity items will be dynamically loaded -->
+                    </div>
+                </section>
+
+                <!-- Topics Progress -->
+                <section class="topics-progress">
+                    <h2>Tiến độ học tập</h2>
+                    <div class="progress-list">
+                        <!-- Progress items will be dynamically loaded -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Handle logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                window.Auth.logout();
+            }
+        });
+
+        // Load user data and update UI
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current page in sidebar
+            const currentPage = window.location.pathname.split('/').pop();
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const href = item.getAttribute('href');
+                if (href && href === currentPage) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

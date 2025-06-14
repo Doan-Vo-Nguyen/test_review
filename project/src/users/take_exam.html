@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ôn Tập Bảo Hiểm - Thi Chính Thức</title>
+  <link rel="stylesheet" href="../../public/css/exam.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Đang tải bài thi chính thức...</p>
+    </div>
+  </div>
+
+  <!-- Exam Selection Screen -->
+  <div class="exam-selection" id="examSelection">
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-certificate"></i> Bài Thi Chính Thức</h1>
+        <p>Tham gia các bài thi chính thức để lấy chứng chỉ - Chỉ được làm một lần</p>
+        <div class="formal-rules">
+          <div class="rule-item warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Chỉ được làm một lần duy nhất</span>
+          </div>
+          <div class="rule-item warning">
+            <i class="fas fa-clock"></i>
+            <span>Không được tạm dừng</span>
+          </div>
+          <div class="rule-item warning">
+            <i class="fas fa-eye-slash"></i>
+            <span>Không xem đáp án trong lúc thi</span>
+          </div>
+          <div class="rule-item info">
+            <i class="fas fa-shield-alt"></i>
+            <span>Chế độ chống gian lận</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="exam-list" id="examList">
+        <!-- Exams will be populated here -->
+      </div>
+      
+      <div class="back-btn-container">
+        <button onclick="window.location.href='home.html'" class="btn-back">
+          <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-exam Instructions -->
+  <div class="pre-exam-modal" id="preExamModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-info-circle"></i> Hướng dẫn thi</h3>
+      </div>
+      <div class="modal-body">
+        <div class="exam-rules">
+          <h4>Quy định thi:</h4>
+          <ul>
+            <li>Bài thi được thực hiện trong thời gian có giới hạn</li>
+            <li>Không được rời khỏi trang web trong quá trình làm bài</li>
+            <li>Mỗi bài thi chỉ được phép làm một lần</li>
+            <li>Sau khi nộp bài không thể sửa đổi</li>
+            <li>Hệ thông sẽ tự động nộp bài khi hết thời gian</li>
+          </ul>
+        </div>
+        <div class="exam-details" id="examDetails">
+          <!-- Exam details will be populated here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="cancelExam()">Hủy</button>
+        <button class="btn-primary" onclick="startFormalExam()">Bắt đầu thi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Progress Bar -->
+  <div class="exam-progress" id="examProgress" style="display: none;">
+    <div class="exam-info-bar">
+      <div class="exam-title-small" id="examTitleSmall">Bài Thi</div>
+      <div class="session-info">
+        <span class="session-id">ID: <span id="sessionIdDisplay">-</span></span>
+      </div>
+    </div>
+    <div class="timer-section">
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="timer-warning" id="timerWarning" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Thời gian sắp hết!</span>
+      </div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+      <div class="question-counter" id="questionCounter">0/0</div>
+    </div>
+  </div>
+
+  <!-- Exam Container -->
+  <div class="exam-container" id="examContainer" style="display: none;">
+    <div class="exam-header">
+      <h1 class="exam-title" id="examTitle">Bài Thi Chính Thức</h1>
+      <div class="exam-info">
+        <div class="info-item">
+          <div class="info-label">Thời gian</div>
+          <div class="info-value" id="timeLimit">60 phút</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Số câu hỏi</div>
+          <div class="info-value" id="totalQuestions">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Điểm đạt</div>
+          <div class="info-value" id="passingScore">70%</div>
+        </div>
+      </div>
+    </div>
+
+    <form id="examForm">
+      <div id="questionsContainer"></div>
+      
+      <div class="submit-container">
+        <button type="submit" class="submit-btn">
+          <i class="fas fa-paper-plane"></i> Nộp Bài Thi
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Final Results Modal -->
+  <div class="results-modal" id="resultsModal" style="display: none;">
+    <div class="modal-content">
+      <div class="results-header">
+        <h2><i class="fas fa-trophy"></i> Kết Quả Bài Thi</h2>
+        <div class="results-score" id="finalScore">0%</div>
+      </div>
+      <div class="results-details" id="resultsDetails">
+        <!-- Results will be populated here -->
+      </div>
+      <div class="submit-container">
+        <button onclick="window.location.href='home.html'" class="submit-btn">
+          <i class="fas fa-home"></i> Về trang chủ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal" id="confirmModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-exclamation-triangle"></i> Xác nhận nộp bài</h3>
+      </div>
+      <div class="modal-body">
+        <p>Bạn có chắc chắn muốn nộp bài thi?</p>
+        <p class="warning-text">Sau khi nộp bài, bạn không thể sửa đổi.</p>
+        <div class="submission-summary" id="submissionSummary"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelSubmit">Hủy</button>
+        <button class="btn-danger" id="confirmSubmit">Nộp bài</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../public/js/auth.js"></script>
+  <script>
+    let examData = null;
+    let sessionData = null;
+    let timeLeft = 0;
+    let timerInterval = null;
+    let selectedExamId = null;
+    let startTime = null;
+    let visibilityWarningCount = 0;
+    let maxVisibilityWarnings = 3;
+
+    // Check authentication and initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!window.Auth.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Prevent context menu and key shortcuts
+      preventCheating();
+      
+      // Load available exams
+      loadAvailableExams();
+    });
+
+    // Prevent common cheating methods
+    function preventCheating() {
+      // Disable right-click context menu
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+      });
+
+      // Disable common keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+            (e.ctrlKey && e.key === 'u') ||
+            (e.ctrlKey && e.key === 'a') ||
+            (e.ctrlKey && e.key === 'c') ||
+            (e.ctrlKey && e.key === 'v') ||
+            (e.ctrlKey && e.key === 'x')) {
+          e.preventDefault();
+          showWarning('Hành động này không được phép trong quá trình thi!');
+          return false;
+        }
+      });
+
+      // Monitor page visibility
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden && sessionData) {
+          visibilityWarningCount++;
+          if (visibilityWarningCount <= maxVisibilityWarnings) {
+            showWarning(`Cảnh báo ${visibilityWarningCount}/${maxVisibilityWarnings}: Không được rời khỏi trang thi!`);
+          } else {
+            forceSubmitExam('Bài thi bị kết thúc do vi phạm quy định (rời khỏi trang quá nhiều lần)');
+          }
+        }
+      });
+    }
+
+    // Load available formal exams
+    async function loadAvailableExams() {
+      try {
+        showLoading();
+        const token = localStorage.getItem('userToken');
+        const response = await fetch('/api/exams/formal/available', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể tải danh sách bài thi chính thức');
+        }
+
+        const data = await response.json();
+        displayExamList(data.exams);
+        hideLoading();
+      } catch (error) {
+        console.error('Error loading formal exams:', error);
+        showError('Có lỗi khi tải danh sách bài thi chính thức: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Display exam list
+    function displayExamList(exams) {
+      const examList = document.getElementById('examList');
+      
+      if (exams.length === 0) {
+        examList.innerHTML = `
+          <div class="no-exams">
+            <i class="fas fa-inbox"></i>
+            <h3>Không có bài thi chính thức nào</h3>
+            <p>Hiện tại chưa có bài thi chính thức nào khả dụng.</p>
+          </div>
+        `;
+        return;
+      }
+
+      examList.innerHTML = exams.map(exam => `
+        <div class="exam-card formal ${!exam.can_take ? 'disabled' : ''}" 
+             ${exam.can_take ? `onclick="selectExam(${exam.id})"` : ''}>
+          <div class="exam-card-header">
+            <h3>${exam.title}</h3>
+            <div class="exam-badge">
+              <i class="fas fa-certificate"></i>
+              ${exam.already_taken ? 'Đã thi' : 'Chính thức'}
+            </div>
+          </div>
+          <div class="exam-card-body">
+            <p>${exam.description || 'Không có mô tả'}</p>
+            <div class="exam-stats">
+              <div class="stat-item">
+                <i class="fas fa-clock"></i>
+                <span>${exam.time_limit || 60} phút</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-question-circle"></i>
+                <span>${exam.question_count} câu</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-target"></i>
+                <span>Đạt: ${exam.passing_score}%</span>
+              </div>
+            </div>
+            ${exam.already_taken ? `
+              <div class="already-taken-notice">
+                <i class="fas fa-check-circle"></i>
+                <span>Bạn đã hoàn thành bài thi này</span>
+              </div>
+            ` : ''}
+          </div>
+          <div class="exam-card-footer">
+            ${exam.can_take ? `
+              <button class="btn-exam-start">
+                <i class="fas fa-play"></i> Bắt đầu thi
+              </button>
+            ` : `
+              <button class="btn-exam-start disabled" disabled>
+                <i class="fas fa-lock"></i> Đã hoàn thành
+              </button>
+            `}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Select exam and show pre-exam instructions
+    async function selectExam(examId) {
+      selectedExamId = examId;
+      try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/exams/${examId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể tải thông tin bài thi');
+        }
+
+        const data = await response.json();
+        showPreExamInstructions(data.exam);
+        hideLoading();
+      } catch (error) {
+        console.error('Error loading exam details:', error);
+        showError('Có lỗi khi tải thông tin bài thi: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Show pre-exam instructions
+    function showPreExamInstructions(exam) {
+      const modal = document.getElementById('preExamModal');
+      const details = document.getElementById('examDetails');
+      
+      details.innerHTML = `
+        <div class="exam-info-detailed">
+          <h4>${exam.title}</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <strong>Thời gian:</strong> ${exam.time_limit} phút
+            </div>
+            <div class="detail-item">
+              <strong>Số câu hỏi:</strong> ${exam.num_questions} câu
+            </div>
+            <div class="detail-item">
+              <strong>Điểm đạt:</strong> ${exam.passing_score}%
+            </div>
+            <div class="detail-item">
+              <strong>Loại bài thi:</strong> Chính thức
+            </div>
+          </div>
+          <div class="description">
+            <strong>Mô tả:</strong>
+            <p>${exam.description || 'Không có mô tả chi tiết'}</p>
+          </div>
+        </div>
+      `;
+      
+      modal.style.display = 'block';
+    }
+
+    // Cancel exam
+    function cancelExam() {
+      document.getElementById('preExamModal').style.display = 'none';
+      selectedExamId = null;
+    }
+
+    // Start formal exam
+    async function startFormalExam() {
+      try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        
+        // Start exam session
+        const response = await fetch('/api/results/start-exam', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            examId: selectedExamId,
+            isPractice: false
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể bắt đầu bài thi');
+        }
+
+        const data = await response.json();
+        sessionData = data;
+        
+        // Get exam questions
+        const sessionResponse = await fetch(`/api/results/session/${data.sessionId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!sessionResponse.ok) {
+          throw new Error('Không thể tải câu hỏi');
+        }
+
+        const sessionInfo = await sessionResponse.json();
+        examData = sessionInfo;
+        
+        // Start the exam
+        initializeExam();
+        hideLoading();
+      } catch (error) {
+        console.error('Error starting exam:', error);
+        showError('Có lỗi khi bắt đầu bài thi: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Initialize exam interface
+    function initializeExam() {
+      // Hide selection screens
+      document.getElementById('examSelection').style.display = 'none';
+      document.getElementById('preExamModal').style.display = 'none';
+      
+      // Show exam interface
+      document.getElementById('examProgress').style.display = 'flex';
+      document.getElementById('examContainer').style.display = 'block';
+
+      // Update exam info
+      document.getElementById('examTitle').textContent = examData.session.title;
+      document.getElementById('examTitleSmall').textContent = examData.session.title;
+      document.getElementById('sessionIdDisplay').textContent = sessionData.sessionId;
+      document.getElementById('timeLimit').textContent = `${examData.session.time_limit} phút`;
+      document.getElementById('totalQuestions').textContent = examData.questions.length;
+      document.getElementById('passingScore').textContent = `${examData.session.passing_score}%`;
+
+      // Generate questions
+      generateQuestions();
+
+      // Start timer
+      startTime = new Date();
+      timeLeft = examData.timeRemaining;
+      startTimer();
+
+      // Setup event listeners
+      setupEventListeners();
+    }
+
+    // Generate questions HTML
+    function generateQuestions() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = examData.questions.map((question, index) => 
+        generateQuestionHTML(question, index)
+      ).join('');
+
+      updateProgress();
+    }
+
+    // Generate single question HTML
+    function generateQuestionHTML(question, index) {
+      return `
+        <div class="question-container" data-question-id="${question.id}">
+          <div class="question-header">
+            <span class="question-number">Câu ${index + 1}</span>
+            <span class="question-type">${getQuestionTypeText(question.question_type)}</span>
+          </div>
+          <div class="question-text">
+            ${question.question_text}
+          </div>
+          <div class="options-container">
+            ${generateOptionsHTML(question, index)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Generate options HTML
+    function generateOptionsHTML(question, index) {
+      if (question.question_type === 'multiple_choice' && question.options) {
+        return question.options.map((option, i) => `
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="${option}" id="q${question.id}opt${i}">
+            <label for="q${question.id}opt${i}">${option}</label>
+          </div>
+        `).join('');
+      } else if (question.question_type === 'true_false') {
+        return `
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="true" id="q${question.id}true">
+            <label for="q${question.id}true">Đúng</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="question${question.id}" value="false" id="q${question.id}false">
+            <label for="q${question.id}false">Sai</label>
+          </div>
+        `;
+      }
+      return '';
+    }
+
+    // Get question type text
+    function getQuestionTypeText(type) {
+      switch(type) {
+        case 'multiple_choice': return 'Trắc nghiệm';
+        case 'true_false': return 'Đúng/Sai';
+        default: return 'Khác';
+      }
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Progress tracking
+      document.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('change', updateProgress);
+      });
+
+      // Form submission
+      document.getElementById('examForm').addEventListener('submit', handleSubmit);
+
+      // Confirmation modal
+      document.getElementById('cancelSubmit').addEventListener('click', closeConfirmation);
+      document.getElementById('confirmSubmit').addEventListener('click', submitExam);
+    }
+
+    // Start timer
+    function startTimer() {
+      updateTimerDisplay();
+      
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        // Show warning when 5 minutes left
+        if (timeLeft === 300) {
+          showTimerWarning();
+        }
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          forceSubmitExam('Hết thời gian làm bài');
+        }
+      }, 1000);
+    }
+
+    // Update timer display
+    function updateTimerDisplay() {
+      const timerElement = document.getElementById('timer');
+      timerElement.textContent = formatTime(timeLeft);
+      
+      // Change color based on time remaining
+      if (timeLeft < 300) { // 5 minutes
+        timerElement.classList.add('warning');
+      }
+      if (timeLeft < 60) { // 1 minute
+        timerElement.classList.add('danger');
+      }
+    }
+
+    // Show timer warning
+    function showTimerWarning() {
+      const warningElement = document.getElementById('timerWarning');
+      warningElement.style.display = 'flex';
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+        warningElement.style.display = 'none';
+      }, 5000);
+    }
+
+    // Format time display
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // Update progress
+    function updateProgress() {
+      const total = examData.questions.length;
+      const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / total) * 100;
+      
+      document.getElementById('progressBar').style.width = `${percentage}%`;
+      document.getElementById('questionCounter').textContent = `${answered}/${total}`;
+    }
+
+    // Handle form submission
+    function handleSubmit(event) {
+      event.preventDefault();
+      showSubmissionConfirmation();
+    }
+
+    // Show submission confirmation
+    function showSubmissionConfirmation() {
+      const modal = document.getElementById('confirmModal');
+      const summary = document.getElementById('submissionSummary');
+      
+      const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+      const total = examData.questions.length;
+      
+      summary.innerHTML = `
+        <div class="submission-stats">
+          <div class="stat-item">
+            <span class="label">Câu đã trả lời:</span>
+            <span class="value">${answered}/${total}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Thời gian còn lại:</span>
+            <span class="value">${formatTime(timeLeft)}</span>
+          </div>
+          ${answered < total ? `
+            <div class="stat-item warning">
+              <span class="label">Câu chưa trả lời:</span>
+              <span class="value">${total - answered}</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      modal.style.display = 'block';
+    }
+
+    // Close confirmation modal
+    function closeConfirmation() {
+      document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    // Submit exam
+    async function submitExam() {
+      try {
+        closeConfirmation();
+        clearInterval(timerInterval);
+        showLoading();
+
+        const formData = new FormData(document.getElementById('examForm'));
+        const answers = {};
+        
+        // Collect answers
+        examData.questions.forEach(question => {
+          const answer = formData.get(`question${question.id}`);
+          answers[question.id] = answer;
+        });
+
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/results/submit-exam', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            sessionId: sessionData.sessionId,
+            answers: answers
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Không thể nộp bài thi');
+        }
+
+        const result = await response.json();
+        showResults(result);
+        hideLoading();
+      } catch (error) {
+        console.error('Error submitting exam:', error);
+        showError('Có lỗi khi nộp bài: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    // Force submit exam (due to violations or time up)
+    function forceSubmitExam(reason) {
+      showWarning(reason);
+      setTimeout(() => {
+        submitExam();
+      }, 2000);
+    }
+
+    // Show results
+    function showResults(data) {
+      const { result } = data;
+      
+      // Hide exam interface
+      document.getElementById('examProgress').style.display = 'none';
+      document.getElementById('examContainer').style.display = 'none';
+      
+      // Show results
+      const modal = document.getElementById('resultsModal');
+      const scoreElement = document.getElementById('finalScore');
+      
+      scoreElement.textContent = `${result.score}%`;
+      scoreElement.style.color = result.passed ? '#2ecc71' : '#e74c3c';
+      
+      // Results details
+      document.getElementById('resultsDetails').innerHTML = `
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">Điểm số</div>
+            <div class="result-value">${result.score}%</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Câu đúng</div>
+            <div class="result-value">${result.correctAnswers}/${result.totalQuestions}</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Thời gian làm bài</div>
+            <div class="result-value">${formatTime(result.duration)}</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Kết quả</div>
+            <div class="result-value ${result.passed ? 'passed' : 'failed'}">
+              ${result.passed ? 'ĐẠT' : 'CHƯA ĐẠT'}
+            </div>
+          </div>
+        </div>
+        
+        <div class="final-message">
+          ${result.passed ? 
+            '<div class="success-message"><i class="fas fa-check-circle"></i> Chúc mừng! Bạn đã vượt qua bài thi.</div>' :
+            '<div class="fail-message"><i class="fas fa-times-circle"></i> Rất tiếc! Bạn chưa đạt yêu cầu của bài thi.</div>'
+          }
+        </div>
+        
+        <div class="exam-info">
+          <p><strong>Phiên thi:</strong> ${sessionData.sessionId}</p>
+          <p><strong>Thời gian hoàn thành:</strong> ${new Date().toLocaleString('vi-VN')}</p>
+        </div>
+      `;
+      
+      modal.style.display = 'block';
+    }
+
+    // Utility functions
+    function showLoading() {
+      document.getElementById('loadingScreen').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingScreen').style.display = 'none';
+    }
+
+    function showError(message) {
+      alert('Lỗi: ' + message);
+    }
+
+    function showWarning(message) {
+      // Create a warning notification
+      const warning = document.createElement('div');
+      warning.className = 'warning-notification';
+      warning.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(warning);
+      
+      setTimeout(() => {
+        warning.classList.add('show');
+      }, 100);
+      
+      setTimeout(() => {
+        warning.classList.remove('show');
+        setTimeout(() => {
+          if (document.body.contains(warning)) {
+            document.body.removeChild(warning);
+          }
+        }, 300);
+      }, 4000);
+    }
+
+    // Prevent page navigation during exam
+    window.addEventListener('beforeunload', function(e) {
+      if (sessionData && timeLeft > 0) {
+        const message = 'Bạn đang trong quá trình thi. Rời khỏi trang sẽ mất kết quả hiện tại và có thể bị coi là vi phạm quy định.';
+        e.returnValue = message;
+        return message;
+      }
+    });
+  </script>
+</body>
+</html> 

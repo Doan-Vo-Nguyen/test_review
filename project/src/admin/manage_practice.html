@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đề Luyện Tập</title>
+    <link rel="stylesheet" href="../../public/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shield-alt"></i> Admin Panel</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="manage_exams.html" class="nav-item">
+                    <i class="fas fa-certificate"></i>
+                    <span>Đề Thi Chính Thức</span>
+                </a>
+                <a href="manage_practice.html" class="nav-item active">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Đề Luyện Tập</span>
+                </a>
+                <a href="manage_questions.html" class="nav-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Câu Hỏi</span>
+                </a>
+                <a href="manage_users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Người Dùng</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng Xuất</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1><i class="fas fa-dumbbell"></i> Quản Lý Đề Luyện Tập</h1>
+                <button class="btn-primary" onclick="showCreateModal()">
+                    <i class="fas fa-plus"></i> Tạo Đề Luyện Tập Mới
+                </button>
+            </div>
+
+            <!-- Practice List -->
+            <div class="practice-list">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Danh Sách Đề Luyện Tập</h3>
+                        <div class="search-box">
+                            <input type="text" placeholder="Tìm kiếm đề luyện tập..." id="searchInput">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table" id="practiceTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tiêu Đề</th>
+                                        <th>Mô Tả</th>
+                                        <th>Thời Gian</th>
+                                        <th>Số Câu Hỏi</th>
+                                        <th>Ngày Tạo</th>
+                                        <th>Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="practiceTableBody">
+                                    <!-- Practice data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Practice Modal -->
+    <div class="modal" id="practiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tạo Đề Luyện Tập Mới</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="practiceForm">
+                    <input type="hidden" id="practiceId">
+                    <div class="form-group">
+                        <label for="title">Tiêu Đề <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" required 
+                               placeholder="Nhập tiêu đề đề luyện tập">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Mô Tả</label>
+                        <textarea id="description" name="description" rows="3"
+                                  placeholder="Nhập mô tả cho đề luyện tập"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="timeLimit">Thời Gian (phút) <span class="required">*</span></label>
+                            <input type="number" id="timeLimit" name="timeLimit" required 
+                                   min="1" max="300" value="45"
+                                   placeholder="45">
+                        </div>
+                        <div class="form-group">
+                            <label for="numQuestions">Số Câu Hỏi <span class="required">*</span></label>
+                            <input type="number" id="numQuestions" name="numQuestions" required 
+                                   min="1" max="100" value="20"
+                                   placeholder="20">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
+                <button type="button" class="btn-primary" onclick="savePractice()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Xác Nhận Xóa</h3>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa đề luyện tập này? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Hủy</button>
+                <button type="button" class="btn-danger" onclick="confirmDelete()">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let practices = [];
+        let editingPracticeId = null;
+        let deletingPracticeId = null;
+
+        // Load practices on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPractices();
+            setupEventListeners();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', filterPractices);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+
+        // Load all practices
+        async function loadPractices() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/practice/simple', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải danh sách đề luyện tập');
+                }
+
+                const data = await response.json();
+                practices = data.exams || [];
+                displayPractices(practices);
+            } catch (error) {
+                console.error('Error loading practices:', error);
+                showNotification('Có lỗi khi tải danh sách đề luyện tập', 'error');
+            }
+        }
+
+        // Display practices in table
+        function displayPractices(practiceList) {
+            const tbody = document.getElementById('practiceTableBody');
+            
+            if (practiceList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <i class="fas fa-inbox"></i>
+                            <p>Chưa có đề luyện tập nào</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = practiceList.map(practice => `
+                <tr>
+                    <td>${practice.id}</td>
+                    <td>${practice.title}</td>
+                    <td class="description-cell" title="${practice.description || ''}">
+                        ${truncateText(practice.description || '', 50)}
+                    </td>
+                    <td>${practice.time_limit} phút</td>
+                    <td>${practice.num_questions}</td>
+                    <td>${formatDate(practice.created_at)}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit" onclick="editPractice(${practice.id})" 
+                                title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deletePractice(${practice.id})" 
+                                title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter practices
+        function filterPractices() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = practices.filter(practice => 
+                practice.title.toLowerCase().includes(searchTerm) ||
+                (practice.description && practice.description.toLowerCase().includes(searchTerm))
+            );
+            displayPractices(filtered);
+        }
+
+        // Show create modal
+        function showCreateModal() {
+            editingPracticeId = null;
+            document.getElementById('modalTitle').textContent = 'Tạo Đề Luyện Tập Mới';
+            document.getElementById('practiceForm').reset();
+            document.getElementById('practiceId').value = '';
+            document.getElementById('practiceModal').style.display = 'block';
+        }
+
+        // Edit practice
+        function editPractice(id) {
+            const practice = practices.find(p => p.id === id);
+            if (!practice) return;
+
+            editingPracticeId = id;
+            document.getElementById('modalTitle').textContent = 'Chỉnh Sửa Đề Luyện Tập';
+            document.getElementById('practiceId').value = practice.id;
+            document.getElementById('title').value = practice.title;
+            document.getElementById('description').value = practice.description || '';
+            document.getElementById('timeLimit').value = practice.time_limit;
+            document.getElementById('numQuestions').value = practice.num_questions;
+            document.getElementById('practiceModal').style.display = 'block';
+        }
+
+        // Save practice
+        async function savePractice() {
+            const form = document.getElementById('practiceForm');
+            const formData = new FormData(form);
+            
+            const practiceData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                time_limit: parseInt(formData.get('timeLimit')),
+                num_questions: parseInt(formData.get('numQuestions'))
+            };
+
+            if (!practiceData.title || !practiceData.time_limit || !practiceData.num_questions) {
+                showNotification('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const url = editingPracticeId ? 
+                    `/api/practice/${editingPracticeId}` : 
+                    '/api/practice/create';
+                
+                const method = editingPracticeId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(practiceData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể lưu đề luyện tập');
+                }
+
+                showNotification(
+                    editingPracticeId ? 'Cập nhật đề luyện tập thành công' : 'Tạo đề luyện tập thành công', 
+                    'success'
+                );
+                closeModal();
+                loadPractices();
+            } catch (error) {
+                console.error('Error saving practice:', error);
+                showNotification('Có lỗi khi lưu đề luyện tập', 'error');
+            }
+        }
+
+        // Delete practice
+        function deletePractice(id) {
+            deletingPracticeId = id;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        // Confirm delete
+        async function confirmDelete() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/practice/${deletingPracticeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể xóa đề luyện tập');
+                }
+
+                showNotification('Xóa đề luyện tập thành công', 'success');
+                closeDeleteModal();
+                loadPractices();
+            } catch (error) {
+                console.error('Error deleting practice:', error);
+                showNotification('Có lỗi khi xóa đề luyện tập', 'error');
+            }
+        }
+
+        // Close modals
+        function closeModal() {
+            document.getElementById('practiceModal').style.display = 'none';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            deletingPracticeId = null;
+        }
+
+        // Utility functions
+        function truncateText(text, maxLength) {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            return new Date(dateString).toLocaleDateString('vi-VN');
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-times' : 'fa-info'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html> 

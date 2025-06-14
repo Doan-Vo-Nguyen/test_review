@@ -1,0 +1,13 @@
+{
+  "name": "db-init",
+  "version": "1.0.0",
+  "description": "Database initialization script",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "mysql2": "^3.6.0"
+  }
+}
